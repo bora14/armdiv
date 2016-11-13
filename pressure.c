@@ -1,8 +1,8 @@
-/*
+Ôªø/*
  * \file pressure.c
  *
  *  Created on: 03.08.2016
- *      Author: —Î‡Ï‡Ô‡
+ *      Author: –°–ª–∞–º–∞–ø–∞
  */
 
 #include "pressure.h"

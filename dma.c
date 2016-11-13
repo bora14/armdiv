@@ -1,4 +1,4 @@
-/**
+ï»¿/**
  * \file dma.c
  *
  *  Created on: 25.08.2016
@@ -11,7 +11,7 @@ static DMA_ChannelInitTypeDef DMA_InitStr;
 static DMA_CtrlDataInitTypeDef DMA_PriCtrlStr;
 
 /**
- * Íàñòðîéêà êîíòðîëëåðà DMA.
+ * ÐŒÐ°ÑÑ‚Ñ€Ð¾Ð¹ÐºÐ° ÐºÐ¾Ð½Ñ‚Ñ€Ð¾Ð»Ð»ÐµÑ€Ð° DMA.
  */
 void dma_Init(uint8_t channel, uint32_t source, uint32_t dest)
 {
@@ -56,14 +56,14 @@ void dma_Init(uint8_t channel, uint32_t source, uint32_t dest)
 }
 
 /**
- * \brief Èíèöèàëèçàöèÿ êàíàëà DMA.
+ * \brief Â»Ð½Ð¸Ñ†Ð¸Ð°Ð»Ð¸Ð·Ð°Ñ†Ð¸Â¤ ÐºÐ°Ð½Ð°Ð»Ð° DMA.
  *
- * dma_Set óñòàíàâëèâàåò àäðåñà èñòî÷íèêà è ïðèåìíèêà äàííûõ
- * äëÿ ïåðåäà÷è.
+ * dma_Set ÑƒÑÑ‚Ð°Ð½Ð°Ð²Ð»Ð¸Ð²Ð°ÐµÑ‚ Ð°Ð´Ñ€ÐµÑÐ° Ð¸ÑÑ‚Ð¾Ñ‡Ð½Ð¸ÐºÐ° Ð¸ Ð¿Ñ€Ð¸ÐµÐ¼Ð½Ð¸ÐºÐ° Ð´Ð°Ð½Ð½Ñ‹Ñ…
+ * Ð´Ð»Â¤ Ð¿ÐµÑ€ÐµÐ´Ð°Ñ‡Ð¸.
  *
- * \param channel - íîìåð êàíàëà DMA
- * \param source - àäðåñ èñòî÷íèêà äàííûõ
- * \param dest - àäðåñ ïðèåìíèêà äàííûõ
+ * \param channel - Ð½Ð¾Ð¼ÐµÑ€ ÐºÐ°Ð½Ð°Ð»Ð° DMA
+ * \param source - Ð°Ð´Ñ€ÐµÑ Ð¸ÑÑ‚Ð¾Ñ‡Ð½Ð¸ÐºÐ° Ð´Ð°Ð½Ð½Ñ‹Ñ…
+ * \param dest - Ð°Ð´Ñ€ÐµÑ Ð¿Ñ€Ð¸ÐµÐ¼Ð½Ð¸ÐºÐ° Ð´Ð°Ð½Ð½Ñ‹Ñ…
  */
 void dma_Set(uint32_t source, uint32_t dest)
 {
@@ -72,12 +72,12 @@ void dma_Set(uint32_t source, uint32_t dest)
 }
 
 /**
- * Ôóíêöèÿ, îïðåäåëÿþùàÿ ñîñòîÿíèå êàíàëà DMA (ïåðåäàåò / íå ïåðåäàåò)
+ * â€˜ÑƒÐ½ÐºÑ†Ð¸Â¤, Ð¾Ð¿Ñ€ÐµÐ´ÐµÐ»Â¤ÑŽÑ‰Ð°Â¤ ÑÐ¾ÑÑ‚Ð¾Â¤Ð½Ð¸Ðµ ÐºÐ°Ð½Ð°Ð»Ð° DMA (Ð¿ÐµÑ€ÐµÐ´Ð°ÐµÑ‚ / Ð½Ðµ Ð¿ÐµÑ€ÐµÐ´Ð°ÐµÑ‚)
  */
 uint32_t dma_GetCurrEnableState(uint8_t DMA_Channel)
 {
   DMA_CtrlDataTypeDef *ptr;
-  //ïîëó÷àåì óêàçàòåëü íà óïðàâëÿþùóþ òàáëèöó âûáðàííîãî êàíàëà
+  //Ð¿Ð¾Ð»ÑƒÑ‡Ð°ÐµÐ¼ ÑƒÐºÐ°Ð·Ð°Ñ‚ÐµÐ»ÑŒ Ð½Ð° ÑƒÐ¿Ñ€Ð°Ð²Ð»Â¤ÑŽÑ‰ÑƒÑŽ Ñ‚Ð°Ð±Ð»Ð¸Ñ†Ñƒ Ð²Ñ‹Ð±Ñ€Ð°Ð½Ð½Ð¾Ð³Ð¾ ÐºÐ°Ð½Ð°Ð»Ð°
   ptr = (DMA_CtrlDataTypeDef *)(MDR_DMA->CTRL_BASE_PTR + (DMA_Channel * sizeof(DMA_CtrlDataTypeDef)));
 
   return (ptr->DMA_Control & 0x07);

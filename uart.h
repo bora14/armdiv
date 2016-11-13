@@ -1,4 +1,4 @@
-/** \file
+﻿/** \file
  * uart.h
  *
  *  Created on: 13.03.2013

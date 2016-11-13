@@ -1,4 +1,4 @@
-/*
+ï»¿/*
  * xmodem.h
  *
  *  Created on: 13.09.2011
@@ -10,14 +10,14 @@
 
 #include "board.h"
 
-#define XMODEM_SOH					(0x01u)		///< ñèìâîë íà÷àëà çàãîëîâêà
-#define XMODEM_EOT					(0x04u)		///< ñèìâîë êîíöà äàííûõ
-#define XMODEM_ACK					(0x06u)		///< ñèìâîë ïîëîæèòåëüíîãî ïîäòâåðæäåíèÿ
-#define XMODEM_NAK					(0x15u)		///< ñèìâîë îòðèöàòåëüíîãî ïîäòâåðæäåíèÿ
-#define XMODEM_ETB					(0x17u)		///< ñèìâîë îêîí÷àíèÿ ïåðåäà÷è
-#define XMODEM_CAN					(0x18u)		///< ñèìâîë îòìåíû îáìåíà
-#define XMODEM_C					(0x43u)		///< ñèìâîë çàïðîñà íà ïåðåäà÷ó
-#define XMODEM_LEN_BLOCK			(128u)		///< äëèíà áëîêà äàííûõ
+#define XMODEM_SOH					(0x01u)		///< ÑÐ¸Ð¼Ð²Ð¾Ð» Ð½Ð°Ñ‡Ð°Ð»Ð° Ð·Ð°Ð³Ð¾Ð»Ð¾Ð²ÐºÐ°
+#define XMODEM_EOT					(0x04u)		///< ÑÐ¸Ð¼Ð²Ð¾Ð» ÐºÐ¾Ð½Ñ†Ð° Ð´Ð°Ð½Ð½Ñ‹Ñ…
+#define XMODEM_ACK					(0x06u)		///< ÑÐ¸Ð¼Ð²Ð¾Ð» Ð¿Ð¾Ð»Ð¾Ð¶Ð¸Ñ‚ÐµÐ»ÑŒÐ½Ð¾Ð³Ð¾ Ð¿Ð¾Ð´Ñ‚Ð²ÐµÑ€Ð¶Ð´ÐµÐ½Ð¸Ñ
+#define XMODEM_NAK					(0x15u)		///< ÑÐ¸Ð¼Ð²Ð¾Ð» Ð¾Ñ‚Ñ€Ð¸Ñ†Ð°Ñ‚ÐµÐ»ÑŒÐ½Ð¾Ð³Ð¾ Ð¿Ð¾Ð´Ñ‚Ð²ÐµÑ€Ð¶Ð´ÐµÐ½Ð¸Ñ
+#define XMODEM_ETB					(0x17u)		///< ÑÐ¸Ð¼Ð²Ð¾Ð» Ð¾ÐºÐ¾Ð½Ñ‡Ð°Ð½Ð¸Ñ Ð¿ÐµÑ€ÐµÐ´Ð°Ñ‡Ð¸
+#define XMODEM_CAN					(0x18u)		///< ÑÐ¸Ð¼Ð²Ð¾Ð» Ð¾Ñ‚Ð¼ÐµÐ½Ñ‹ Ð¾Ð±Ð¼ÐµÐ½Ð°
+#define XMODEM_C					(0x43u)		///< ÑÐ¸Ð¼Ð²Ð¾Ð» Ð·Ð°Ð¿Ñ€Ð¾ÑÐ° Ð½Ð° Ð¿ÐµÑ€ÐµÐ´Ð°Ñ‡Ñƒ
+#define XMODEM_LEN_BLOCK			(128u)		///< Ð´Ð»Ð¸Ð½Ð° Ð±Ð»Ð¾ÐºÐ° Ð´Ð°Ð½Ð½Ñ‹Ñ…
 #define XMODEM_TIMEOUT_STATE_Yes	(1u)
 #define XMODEM_TIMEOUT_STATE_No		(0u)
 #define XMODEM_WAIT_NUM				(20u)

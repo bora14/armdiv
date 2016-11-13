@@ -1,8 +1,8 @@
-/*
+Ôªø/*
  * memo.h
  *
  *  Created on: 25.01.2016
- *      Author: —Î‡Ï‡Ô‡
+ *      Author: –°–ª–∞–º–∞–ø–∞
  */
 
 #ifndef MEMO_H_
@@ -25,7 +25,7 @@
 #define MEMO_DATA_ADDR		(0x04)
 
 #define MEMO_CONF_BANK_SEL	EEPROM_Main_Bank_Select
-#define MEMO_CONF_KEY		(0x55) ///<  Î˛˜ Ì‡ÎË˜Ëˇ ‚ œ«” ÔÂ‚ÓÌ‡˜‡Î¸Ì˚ı Ì‡ÒÚÓÂÍ —÷¬ƒ
+#define MEMO_CONF_KEY		(0x55) ///< –ö–ª—é—á –Ω–∞–ª–∏—á–∏—è –≤ –ü–ó–£ –ø–µ—Ä–≤–æ–Ω–∞—á–∞–ª—å–Ω—ã—Ö –Ω–∞—Å—Ç—Ä–æ–µ–∫ –°–¶–í–î
 #define MEMO_CONF_PRE_LEN	(sizeof(Preset_t))
 #define MEMO_CONF_BASE_ADR	((MEMO_PAGE_NUM - 1) * MEMO_PAGE_SZ)
 #define MEMO_CONF_KEY_REG	(0x00)
