@@ -97,15 +97,19 @@ int main()
 			{
 				preset.pack->T += MDR_TIMER1->ARR;
 //				preset.pack->T = (((uint64_t)2028 * (uint64_t)preset.pack->T) >> 11) + 20 * (MDR_TIMER1->ARR & 0xFFFF);
-//				preset.pack->termo += termo_Val();
-				preset.pack->termo = preset.amp;
+#ifndef AGC_RECU
+				if(preset.termo_src == Amplitude)
+					preset.pack->termo = preset.amp;
+				else
+					preset.pack->termo += termo_Val();
+#endif
 			}
 			else
 			{
-//				if(preset.termo_src == Amplitude) // Передача значения огибающей
-//				{
-//					preset.pack->termo = preset.amp;
-//				}
+
+#ifdef AGC_RECU
+				preset.pack->termo = preset.amp;
+#endif
 
 				preset.T[preset.t & 0x01] = preset.pack->T;
 

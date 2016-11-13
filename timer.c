@@ -199,7 +199,7 @@ int Timer1_Configure(Preset_t * preset)
 
 	sTIM_ChnInit.TIMER_CH_Number              = TIMER_CHANNEL1;
 	sTIM_ChnInit.TIMER_CH_Mode                = TIMER_CH_MODE_PWM;
-	sTIM_ChnInit.TIMER_CH_CCR1_Ena			  = ENABLE;
+	sTIM_ChnInit.TIMER_CH_CCR1_Ena			  = DISABLE;
 	sTIM_ChnInit.TIMER_CH_CCR_UpdateMode 	  = TIMER_CH_CCR_Update_On_CNT_eq_0;
 //	sTIM_ChnInit.TIMER_CH_CCR_UpdateMode 	  = TIMER_CH_CCR_Update_Immediately;
 
@@ -213,6 +213,7 @@ int Timer1_Configure(Preset_t * preset)
 	TIMER_ChnInit(MDR_TIMER1, &sTIM_ChnInit);
 
 	sTIM_ChnInit.TIMER_CH_Number              = TIMER_CHANNEL2;
+	sTIM_ChnInit.TIMER_CH_CCR1_Ena			  = ENABLE;
 
 	if(preset->edge == Falling_Edge)
 		sTIM_ChnInit.TIMER_CH_REF_Format          = TIMER_CH_REF_Format7;

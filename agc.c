@@ -70,22 +70,23 @@ int32_t agc_Att0()
  */
 int32_t agc_Amp()
 {
-	int32_t amp = 0;
+	static int32_t rem;
+	int32_t amp = 0, AMP;
 
 //	ADC_SetChan(Amplitude);
 
 	ADC_Read((uint16_t * )&amp);
 
-	amp = abs(ADC_MEAN - amp);
-#ifdef INTERFACE_TYPE_APP
-	preset->pack->amp = (990 * preset->pack->amp + 10 * amp)/1000;
+	if(preset->termo_src == Amplitude)
+	{
+		amp = abs(ADC_MEAN - amp);
+	}
 
-	return preset->pack->amp;
-#endif
-#ifdef INTERFACE_TYPE_MATLAB
+	AMP = ((1 << D) - 1) * preset->amp + rem;
 
-	preset->amp = ((((1 << D) - 1) * preset->amp) >> D) + amp;
+	preset->amp = (AMP >> D) + amp;
+
+	rem = AMP & 0x3ff;
 
 	return preset->amp;
-#endif
 }

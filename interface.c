@@ -58,8 +58,9 @@ void dataTr()
 	{
 		UART_PutChar(USE_UART, *p++);
 	}
-
-//	pack.termo = 0;
+#ifndef AGC_RECU
+	pack.termo = 0;
+#endif
 
 	pack.T = 0;
 #endif
@@ -272,9 +273,11 @@ int ta_Send()
 #ifdef INTERFACE_TYPE_MATLAB
 		T = (float)preset->T[(preset->t-1) & 0x01];
 		Period = (T * Tq_ms) / (float)preset->ave_num;
-		pack.T= 0;
+		pack.T = 0;
 		termo = (float)(pack.termo >> 10)/4096.0f * 0.0003f;
-//		pack.termo = 0;
+#ifndef AGC_RECU
+		pack.termo = 0;
+#endif
 		UART_PutChar(USE_UART, TA_MARK);
 #endif
 		return idx;
