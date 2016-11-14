@@ -24,7 +24,7 @@
 #define SCH_TYPE	(2)
 
 //#define AGC_ON			///< включение АРУ
-//#define AGC_RECU		///< Рекурсивная оценка значения АЦП
+#define AGC_RECU		///< Рекурсивная оценка значения АЦП
 
 //#define FLL_ASSISTED	///< петля ФАПЧ с частотной поддержкой
 

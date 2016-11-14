@@ -89,15 +89,16 @@ int32_t dpll_Filt(dpll_t * dpll_)
 	dpll.shift = (phase * (int32_t)DPLL_TIMER->ARR) / 360 ;
 
 	dpll_->Acc = dpll_->dAc[pos] + dpll.shift;
-	if(abs(dpll.Acc) > 1000)
-		dpll.Acc = 1000 * sign(dpll.Acc);
+	if(abs(dpll.Acc) > (DPLL_TIMER->ARR >> 3))
+		dpll.Acc = (DPLL_TIMER->ARR >> 3) * sign(dpll.Acc);
 //	if(abs(dpll.Acc) < 10)
 //			dpll.Acc = dpll.Acc/2.0f;
 //	dpll_->Acc = 200*sign(dpll_->dAc[pos] + dpll.shift);
 	/* Вычисление выходного значения петлевого фильтра */
-	dpll.Phi = dpll_LoopFilter(dpll_->Acc/10.0f, NULL, NULL, 2);
+//	dpll.Phi = dpll_LoopFilter(dpll_->Acc/10.0f, NULL, NULL, 2);
+	dpll.Phi = dpll_LoopFilter((3600*dpll_->Acc)/(int32_t)DPLL_TIMER->ARR, NULL, NULL, 2);
 
-	dpll.Phi += ((dpll.Acc - (float)dpll.shift) / 10.0f);
+	dpll.Phi += ((dpll.Acc - (float)dpll.shift) / 20.0f);
 //	dpll.Phi += (dpll.Acc / 100.0f);
 
 	/**************************/
@@ -215,9 +216,6 @@ void dpll_ClearPhi()
  */
 void dpll_Update()
 {
-	static int32_t pll_timeout;
-	static uint8_t iv;
-
 	if (dpll.intr[0] == 0) // проверка наличия сигнала на входе
 	{
 		/* Свипирование */
@@ -243,27 +241,18 @@ void dpll_Update()
 		dpll_ClearFilt(); // Сброс значений петлевого фильтра
 
 		dpll.ld = 0;
-
-		iv = 0;
-
-		pll_timeout = 0;
 	}
 	else
 	{
 		dpll.intr[0] = 0;
 		LED_On(LED1);
 #ifdef AGC_ON
-		if((preset->termo_src == Amplitude) && (iv++ > 100u))
+		if(preset->termo_src == Amplitude)
 		{
 			agc();
-			iv--;
 		}
 #endif
-		if(pll_timeout++ == 0)
-		{
-			pll_timeout = 0;
-			dpll_Filt(preset->dpll); // Вычисление выходного значения петлевого фильтра
-		}
+		dpll_Filt(preset->dpll); // Вычисление выходного значения петлевого фильтра
 
 		dpll.ld = 1;
 	}

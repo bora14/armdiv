@@ -17,7 +17,7 @@
 
 static Preset_t * preset;
 
-static const int32_t D = 10;
+static const int32_t D = 9;
 
 /**
  * Инициализация АРУ.
@@ -86,7 +86,7 @@ int32_t agc_Amp()
 
 	preset->amp = (AMP >> D) + amp;
 
-	rem = AMP & 0x3ff;
+	rem = AMP & 0x1ff;
 
 	return preset->amp;
 }
