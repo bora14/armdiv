@@ -89,10 +89,9 @@ int32_t dpll_Filt(dpll_t * dpll_)
 	dpll.shift = (phase * (int32_t)DPLL_TIMER->ARR) / 360 ;
 
 	dpll_->Acc = dpll_->dAc[pos] + dpll.shift;
-	if(abs(dpll.Acc) > (DPLL_TIMER->ARR >> 3))
-		dpll.Acc = (DPLL_TIMER->ARR >> 3) * sign(dpll.Acc);
-//	if(abs(dpll.Acc) < 10)
-//			dpll.Acc = dpll.Acc/2.0f;
+//	if(abs(dpll.Acc) > (DPLL_TIMER->ARR >> 3))
+//		dpll.Acc = (DPLL_TIMER->ARR >> 3) * sign(dpll.Acc);
+
 //	dpll_->Acc = 200*sign(dpll_->dAc[pos] + dpll.shift);
 	/* Вычисление выходного значения петлевого фильтра */
 //	dpll.Phi = dpll_LoopFilter(dpll_->Acc/10.0f, NULL, NULL, 2);
