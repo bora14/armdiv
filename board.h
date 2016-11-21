@@ -273,4 +273,6 @@ int preset_Init();
 
 void preset_Save();
 
+int8_t search(Preset_t * preset);
+
 #endif /* BOARD_H_ */

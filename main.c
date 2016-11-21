@@ -95,6 +95,7 @@ int main()
 #ifdef INTERFACE_TYPE_MATLAB
 			if(ave++ < preset.ave_num)
 			{
+				search(&preset);
 				preset.pack->T += MDR_TIMER1->ARR;
 //				preset.pack->T = (((uint64_t)2028 * (uint64_t)preset.pack->T) >> 11) + 20 * (MDR_TIMER1->ARR & 0xFFFF);
 #ifndef AGC_RECU
@@ -320,4 +321,33 @@ void preset_Save()
 	 * Записть ключа
 	 */
 	memo_WriteByte(MEMO_CONF_BASE_ADR + MEMO_CONF_KEY_REG, MEMO_CONF_BANK_SEL, MEMO_CONF_KEY);
+}
+/**
+ * Поиск резонанса по амплитуде
+ */
+int8_t search(Preset_t * preset)
+{
+	static uint8_t i;
+	static uint16_t period[51];
+	static int32_t amp[51] = {0x7fffffff};
+
+	amp[i % 51] = preset->amp >> 9;
+	period[i % 51] = preset->dpll->T0;
+
+	if(preset->dpll->ld)
+		return 1;
+
+	if(amp[(i + 26) % 51] - amp[i] > 50)
+	{
+		if(amp[(i + 26) % 51] - amp[(i + 1) % 51] > 50)
+		{
+			preset->dpll->intr[1] = 1;
+
+			preset->dpll->T0 = period[(i + 26) % 51] + 10;
+		}
+	}
+
+	i++;
+
+	return 1;
 }

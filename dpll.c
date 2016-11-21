@@ -215,7 +215,7 @@ void dpll_ClearPhi()
  */
 void dpll_Update()
 {
-	if (dpll.intr[0] == 0) // проверка наличия сигнала на входе
+	if ((dpll.intr[0] == 0) || (dpll.intr[1] == 0)) // проверка наличия сигнала на входе
 	{
 		/* Свипирование */
 		dpll.T0--;
@@ -241,7 +241,7 @@ void dpll_Update()
 
 		dpll.ld = 0;
 	}
-	else
+	else if(dpll.intr[1] != 0)
 	{
 		dpll.intr[0] = 0;
 		LED_On(LED1);
