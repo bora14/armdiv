@@ -79,6 +79,11 @@ void dataRcv()
 
 	switch(_uart_cmd->Mrk)
 	{
+#ifdef NUMBER_VERSION
+	case LS:
+		uart_mini_printf(USE_UART, "\r\n %s \r\n", NUMBER_VERSION);
+		break;
+#endif
 	case UP:
 		if(arg > DPLL_F_MAX)
 		{
@@ -115,7 +120,7 @@ void dataRcv()
 		}
 #endif
 #if SCH_TYPE == 2
-		if(arg > 179) /* Не более 179 градусов*/
+		if(arg > 179) /* пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ 179 пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ*/
 		{
 			uart_mini_printf(USE_UART, CMD_OUT_OF_RANGE);
 		}
@@ -247,7 +252,7 @@ void dataRcv()
 	}
 }
 
-// инициализация протокола тарировки
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 static int idx;
 
 void ta_InterfaceInit()
@@ -256,7 +261,7 @@ void ta_InterfaceInit()
 	UART_Configure(UART_TA_BAUD);
 }
 
-// передача данных в режиме тарировки
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 int ta_Send()
 {
 	static float Period, termo, T;

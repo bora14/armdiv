@@ -37,6 +37,9 @@
  */
 typedef enum
 {
+#ifdef NUMBER_VERSION
+	LS = 'SL',
+#endif
 #ifdef AGC_ON
 	TH = 'HT',	///< Порог срабатывания АРУ
 	GC = 'CG',	///< Включение/выключение АРУ
