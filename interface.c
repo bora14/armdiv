@@ -115,7 +115,7 @@ void dataRcv()
 		}
 #endif
 #if SCH_TYPE == 2
-		if(arg > 179) /* Не более 179 градусов*/
+		if(arg > 179) /* пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ 179 пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ*/
 		{
 			uart_mini_printf(USE_UART, CMD_OUT_OF_RANGE);
 		}
@@ -216,6 +216,10 @@ void dataRcv()
 			ta_Download(preset->mode);
 		}
 		break;
+	case ST:
+		preset->search_th = arg;
+		uart_mini_printf(USE_UART, CMD_SUCCESS);
+		break;
 #ifdef AGC_ON
 	case TH:
 		agc_SetTH(arg);
@@ -247,7 +251,7 @@ void dataRcv()
 	}
 }
 
-// инициализация протокола тарировки
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 static int idx;
 
 void ta_InterfaceInit()
@@ -256,7 +260,7 @@ void ta_InterfaceInit()
 	UART_Configure(UART_TA_BAUD);
 }
 
-// передача данных в режиме тарировки
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 int ta_Send()
 {
 	static float Period, termo, T;

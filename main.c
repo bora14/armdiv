@@ -95,7 +95,7 @@ int main()
 #ifdef INTERFACE_TYPE_MATLAB
 			if(ave++ < preset.ave_num)
 			{
-				search(&preset);
+//				search(&preset);
 				preset.pack->T += MDR_TIMER1->ARR;
 //				preset.pack->T = (((uint64_t)2028 * (uint64_t)preset.pack->T) >> 11) + 20 * (MDR_TIMER1->ARR & 0xFFFF);
 #ifndef AGC_RECU
@@ -107,6 +107,7 @@ int main()
 			}
 			else
 			{
+				search(&preset);
 
 #ifdef AGC_RECU
 				preset.pack->termo = preset.amp;
@@ -328,22 +329,23 @@ void preset_Save()
 int8_t search(Preset_t * preset)
 {
 	static uint8_t i;
-	static uint16_t period[51];
-	static int32_t amp[51] = {0x7fffffff};
+	static uint16_t period[AMP_SEARCH_POINTS_NUM];
+	static int32_t amp[AMP_SEARCH_POINTS_NUM] = {0x7fffffff};
 
-	amp[i % 51] = preset->amp >> 9;
-	period[i % 51] = preset->dpll->T0;
+	if(preset->dpll->ld != 0)
+		return 0;
 
-	if(preset->dpll->ld)
-		return 1;
+	amp[i % AMP_SEARCH_POINTS_NUM] = preset->amp >> AGC_RECU_D;
+	period[i % AMP_SEARCH_POINTS_NUM] = preset->pack->T / preset->ave_num;
 
-	if(amp[(i + 26) % 51] - amp[i] > 50)
+
+	if(amp[(i + (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM] - amp[i] > AMP_SEARCH_TH)
 	{
-		if(amp[(i + 26) % 51] - amp[(i + 1) % 51] > 50)
+		if(amp[(i + (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM] - amp[(i + 1) % AMP_SEARCH_POINTS_NUM] > AMP_SEARCH_TH)
 		{
 			preset->dpll->intr[1] = 1;
 
-			preset->dpll->T0 = period[(i + 26) % 51] + 10;
+			preset->dpll->T0 = period[(i + (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM] - preset->ave_num/2;
 		}
 	}
 
