@@ -27,6 +27,7 @@
 #ifdef AGC_ON
 #include "agc.h"
 #endif
+#include <string.h>
 
 static int flgDataTr = 0;
 /**
@@ -332,12 +333,14 @@ int8_t search(Preset_t * preset)
 	static uint16_t period[AMP_SEARCH_POINTS_NUM];
 	static int32_t amp[AMP_SEARCH_POINTS_NUM] = {0x7fffffff};
 
-	if(preset->dpll->ld != 0)
-		return 0;
-
 	amp[i % AMP_SEARCH_POINTS_NUM] = preset->amp >> AGC_RECU_D;
 	period[i % AMP_SEARCH_POINTS_NUM] = preset->pack->T / preset->ave_num;
 
+	if(amp[i % AMP_SEARCH_POINTS_NUM] < 1000)
+		preset->dpll->intr[1] = 0;
+
+	if(preset->dpll->intr[1] != 0)
+		return 0;
 
 	if(amp[(i + (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM] - amp[i] > AMP_SEARCH_TH)
 	{
@@ -346,6 +349,9 @@ int8_t search(Preset_t * preset)
 			preset->dpll->intr[1] = 1;
 
 			preset->dpll->T0 = period[(i + (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM] - preset->ave_num/2;
+
+			memset(amp, 0x7fffffff, sizeof(int32_t) * AMP_SEARCH_POINTS_NUM);
+			i = 0;
 		}
 	}
 
