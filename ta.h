@@ -66,10 +66,12 @@ typedef struct
 } DDG_Koef __attribute__ ((aligned (8)));
 
 void ta_Init(Preset_t * preset_);
-int32_t Calc_Pressures(int32_t T, int32_t U, uint16_t K);
-int32_t DDG(int32_t * T, int32_t * U, uint16_t * K, DDG_Koef *Tbl);
+int32_t Calc_Pressures(int32_t T, int32_t U, uint8_t K);
+int32_t DDG(int32_t * T, int32_t * U, uint8_t * K, DDG_Koef *Tbl);
 _INT indicINT(int32_t x, int32_t n);
 int32_t fintINT(const int32_t * f, int32_t x);
+
+char * ta_SensID(uint8_t num);
 
 uint8_t ta_InitPhaseInterpPoint(const int8_t point);
 
@@ -82,5 +84,7 @@ int8_t ta_Download(opmode_t mode);
 void ta_WriteTable();
 
 void ta_InitTable();
+
+uint8_t ta_Valid();
 
 #endif /* TA_H_ */

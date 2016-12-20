@@ -28,10 +28,10 @@
 //---------------------------------------------------------------------------
 Preset_t * preset;
 
-uint32_t NP[TA_NUM_SENSORS];   /* Код ЧП  */
-uint32_t VTPS[TA_NUM_SENSORS]; /* Код АЦП */
+//uint32_t NP[TA_NUM_SENSORS];   /* Код ЧП  */
+//uint32_t VTPS[TA_NUM_SENSORS]; /* Код АЦП */
 
-Normal_Data Psen[TA_NUM_SENSORS];
+//Normal_Data Psen[TA_NUM_SENSORS];
 DDG_Koef PSens1;
 
 /**
@@ -64,7 +64,7 @@ void ta_Init(Preset_t * preset_)
  * \param[in] temp - код значения температуры, МЗР.
  * \return P - код давления. Для перевода в мм.рт.ст необходимо P/256./1.33322368421052631578947368421016
  */
-int32_t Calc_Pressures(int32_t T, int32_t U, uint16_t K)
+int32_t Calc_Pressures(int32_t T, int32_t U, uint8_t K)
 {
 	int32_t P;
 
@@ -105,7 +105,7 @@ int32_t Calc_Pressures(int32_t T, int32_t U, uint16_t K)
  * \param[in] *Tbl - Адрес таблицы коэффициентов
  * \return P - Pressure in hPa scaled by 2^8
  */
-int32_t DDG(int32_t * T, int32_t * U, uint16_t * K, DDG_Koef *Tbl)
+int32_t DDG(int32_t * T, int32_t * U, uint8_t * K, DDG_Koef *Tbl)
 {
 	int32_t tt, uu, jt, zt, s, f[4], P;
 	_INT INT;
@@ -194,6 +194,14 @@ int32_t fintINT(const int32_t * f, int32_t x)
 		                                                           +(f[2]<<2)-f[3])*x)>>14)+f[2]-f[0])*x)>>15)+f[1];
 	}
 	return y;
+}
+
+/**
+ * Функция, возвращающая идентификатор датчика
+ */
+char * ta_SensID(uint8_t num)
+{
+	return PSens1.BlockID;
 }
 
 /**
@@ -286,6 +294,8 @@ int8_t ta_Upload(opmode_t mode)
 
 	/* Прием данных по XMODEM */
 	ret = xmodem_recv((uint8_t *)&PSens1, sizeof(DDG_Koef));
+	/* Преобразование идентификатора в строку */
+	PSens1.BlockID[TA_BLOCK_ID_LEN - 1] = 0;
 	/* Запись данных тарировочной таблицы в ПЗУ */
 	ta_WriteTable();
 	/* Возврат в предыдущий режим работы */
@@ -365,4 +375,13 @@ void ta_InitTable()
 	{
 		memo_Read(MEMO_DATA_ADDR, MEMO_TA_BANK_SEL, (uint8_t *)&PSens1, sizeof(DDG_Koef));
 	}
+}
+
+uint8_t ta_Valid()
+{
+	uint8_t key = 0;
+
+	key = memo_ReadByte(MEMO_CC_KEY_REG, MEMO_TA_BANK_SEL);
+
+	return key;
 }

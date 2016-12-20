@@ -10,6 +10,7 @@
 #include "board.h"
 #include "MDR32F9Qx_adc.h"
 
+#define ADC_RESOL			12
 #define TERMO_EXT_CHAN 		ADC_CH_ADC7
 #define TERMO_EXT_CHAN_MSK 	ADC_CH_ADC7_MSK
 #define TERMO_INT_CHAN 		ADC_CH_TEMP_SENSOR

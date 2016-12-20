@@ -26,9 +26,11 @@ void UART_Configure(uint32_t baud)
 
 	UART_InitType.UART_BaudRate = baud;
 
-//#ifdef DMA
-//	UART_InitType.UART_FIFOMode = UART_FIFO_ON;
-//#endif
+#ifdef UART_FIFO_TR
+	UART_InitType.UART_FIFOMode = UART_FIFO_ON;
+
+	USE_UART->IFLS = (0 << UART_IFLS_RXIFLSEL_Pos) | (4 << UART_IFLS_TXIFLSEL_Pos);
+#endif
 
 	UART_Init(USE_UART, &UART_InitType);
 

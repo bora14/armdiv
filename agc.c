@@ -17,8 +17,6 @@
 
 static Preset_t * preset;
 
-static const int32_t D = 9;
-
 /**
  * Инициализация АРУ.
  */
@@ -35,10 +33,10 @@ void agc()
 #ifdef AGC_ON
 	int16_t sup;
 
-	sup = (int16_t)(preset->amp >> D) - preset->agc_th;
+	sup = (int16_t)(preset->amp >> AGC_D) - preset->agc_th;
 
 	if(abs(sup) > 20)
-		preset->att = ((preset->att << D) + sup) >> D;
+		preset->att = ((preset->att << AGC_D) + sup) >> AGC_D;
 #endif
 }
 
@@ -82,9 +80,9 @@ int32_t agc_Amp()
 		amp = abs(ADC_MEAN - amp);
 	}
 
-	AMP = ((1 << D) - 1) * preset->amp + rem;
+	AMP = ((1 << AGC_D) - 1) * preset->amp + rem;
 
-	preset->amp = (AMP >> D) + amp;
+	preset->amp = (AMP >> AGC_D) + amp;
 
 	rem = AMP & 0x1ff;
 

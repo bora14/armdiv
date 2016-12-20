@@ -96,7 +96,6 @@ int main()
 			if(ave++ < preset.ave_num)
 			{
 				preset.pack->T += MDR_TIMER1->ARR;
-//				preset.pack->T = (((uint64_t)2028 * (uint64_t)preset.pack->T) >> 11) + 20 * (MDR_TIMER1->ARR & 0xFFFF);
 #ifndef AGC_RECU
 				if(preset.termo_src == Amplitude)
 					preset.pack->termo = preset.amp;
@@ -110,8 +109,14 @@ int main()
 #ifdef AGC_RECU
 				preset.pack->termo = preset.amp;
 #endif
-
 				preset.T[preset.t & 0x01] = preset.pack->T;
+
+				if(preset.mode == PRESSURE)
+				{
+					preset.pack->T = Calc_Pressures((MAX_AVE * (uint64_t)preset.pack->T)/preset.ave_num,
+							(10000 * (uint64_t)preset.pack->termo) >> (AGC_D + ADC_RESOL),
+							preset.sens_num);
+				}
 
 				setFlgDataTr();
 
@@ -166,7 +171,7 @@ int main()
 
 		if(getFlgDataTr())
 		{
-			if(preset.mode == WORK)
+			if((preset.mode == WORK) || (preset.mode == PRESSURE))
 			{
 				clearFlgDataTr();
 				dataTr();
@@ -285,21 +290,12 @@ int preset_Init()
 		preset.filt_order = LOOP_FILTER_ORDER;
 		preset.edge = Falling_Edge;
 		preset.termo_src = Amplitude;
-		preset.shift = 0;
-		preset.att0 = 0;
-		preset.att = preset.att0;
 	#ifdef AGC_ON
 		preset.agc_th = AGC_TH;
 	#endif
 		preset.agc_on = 1;
 		preset.mode = WORK;
 	}
-
-	preset.agc_start = 0;
-	preset.t = 0;
-	preset.amp = 0;
-	preset.T[0] = 0;
-	preset.T[1] = 0;
 
 	return ret;
 }

@@ -11,9 +11,9 @@
 #include "core_cm3.h"
 #include "MDR32F9Qx_config.h"
 
-#define SENS_NUM		0 ///< Номер датчика
-
+#define MCU_UCC		3	///< Напряжение питания МК, В
 //#define DMA	///< Включение ПДП режима UART
+//#define UART_FIFO_TR
 #define XMODEM
 #define POWER_SAVE_MODE_ON ///< Включение режима пониженного энергопотребления
 /**
@@ -206,10 +206,11 @@ typedef struct
  */
 typedef enum
 {
-	WORK = 0, 	///< Нормальная работа
-	TA = 1,		///< Тарировка
-	UPLOAD = 2,	///< Загрузка данных
-	DOWNLOAD = 3	///< Выгрузка данных
+	WORK = 0, 		///< Нормальная работа
+	TA = 1,			///< Тарировка
+	UPLOAD = 2,		///< Загрузка данных
+	DOWNLOAD = 3,	///< Выгрузка данных
+	PRESSURE = 4	///< Измерение давления
 }opmode_t;
 /** @} */
 
@@ -225,28 +226,29 @@ typedef enum
  */
 typedef struct
 {
-	int32_t sweep; 	///< Sweep speed
-	int32_t ave_num; ///< average number
-	int32_t Tmax; 	///< Max Period Natural Freq
-	int32_t Tmin; 	///< Min Period Natural Freq
+	int32_t sweep; 		///< Sweep speed
+	int32_t ave_num; 	///< average number
+	int32_t Tmax; 		///< Max Period Natural Freq
+	int32_t Tmin; 		///< Min Period Natural Freq
+	int8_t sens_num;	///< Номер градуированного датчика
 #if SCH_TYPE == 1
 	int32_t duty_cycle; ///< PWR
 #elif SCH_TYPE == 2
-	int16_t att; ///< PWR
-	int16_t att0; ///< Амплитуда возбуждения в отсутствие захвата
-	uint8_t agc_on; ///< Включение/Выключение АРУ
+	int16_t att; 		///< Амлитуда возбуждения
+	int16_t att0; 		///< Амплитуда возбуждения в отсутствие захвата
+	uint8_t agc_on; 	///< Включение/Выключение АРУ
 #endif
 #ifdef AGC_ON
 	int16_t agc_th;
 #endif
-	int32_t shift; ///< phase shift
-	edge_t edge; ///< Edge Capture (0 - Rising Edge; 1 - Falling Edge)
-	opmode_t mode; ///< определено в MODE
+	int32_t shift; 		///< phase shift
+	edge_t edge; 		///< Edge Capture (0 - Rising Edge; 1 - Falling Edge)
+	opmode_t mode; 		///< определено в OPMODE_T
 	uint8_t filt_order; ///< Loop filter order
-	uint8_t termo_src; ///< Source Temperature (0 - Internal; 1 - External)
-	uint8_t t;		///< Время работы, в тактах
-	uint8_t agc_start; ///< Одиночный запуск АРУ
-	uint32_t amp; ///< Огибающая вхоного сигнала
+	uint8_t termo_src; 	///< Source Temperature (0 - Internal; 1 - External)
+	uint8_t t;			///< Время работы, в тактах
+	uint8_t agc_start; 	///< Одиночный запуск АРУ
+	uint32_t amp; 		///< Огибающая вхоного сигнала
 	int32_t T[2]; 		///< Current Period Natural Freq
 	dpll_t * dpll;
 	pack_t * pack;

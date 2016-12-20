@@ -220,6 +220,11 @@ void dataRcv()
 		{
 			ta_Download(preset->mode);
 		}
+		if(arg == PRESSURE)
+		{
+			preset->mode = PRESSURE;
+			interface_Init(preset);
+		}
 		break;
 #ifdef AGC_ON
 	case TH:
@@ -245,6 +250,16 @@ void dataRcv()
 	case SA:
 		preset_Save();
 		uart_mini_printf(USE_UART, CMD_SUCCESS);
+		break;
+	case SN:
+		if((arg > TA_NUM_SENSORS) || (!ta_Valid()))
+			uart_mini_printf(USE_UART, CMD_INC_ARG);
+		else
+		{
+			preset->sens_num = arg;
+			uart_mini_printf(USE_UART,"\t %s \t", ta_SensID(preset->sens_num));
+			uart_mini_printf(USE_UART, CMD_SUCCESS);
+		}
 		break;
 	default:
 		uart_mini_printf(USE_UART, CMD_UNKNOWN);

@@ -11,6 +11,8 @@
 
 #include "board.h"
 
+#define AGC_D		9
+
 void agc_Init(Preset_t * preset);
 
 void agc();

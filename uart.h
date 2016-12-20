@@ -26,7 +26,11 @@
 #define UART_Transmitter_En		(1)
 #define UART_Transmitter_Dis	(0)
 
+#ifndef UART_FIFO_TR
 #define UART_PutChar(uart, ch)	{while(UART_GetFlagStatus(uart, UART_FLAG_BUSY) == SET); UART_SendData(uart,ch);}
+#else
+#define UART_PutChar(uart, ch)	{while(UART_GetFlagStatus(uart, UART_FLAG_TXFF) == SET); UART_SendData(uart,ch);}
+#endif
 
 #ifdef __cplusplus
  extern "C" {
