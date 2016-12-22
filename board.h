@@ -26,7 +26,7 @@
 //#define AGC_ON			///< включение АРУ
 #define AGC_RECU		///< Рекурсивная оценка значения АЦП
 #define AGC_RECU_D					9
-#define AMP_SEARCH_POINTS_NUM 		31
+#define AMP_SEARCH_POINTS_NUM 		256
 #define AMP_SEARCH_TH				400
 
 //#define FLL_ASSISTED	///< петля ФАПЧ с частотной поддержкой
@@ -242,7 +242,7 @@ typedef struct
 #ifdef AGC_ON
 	int16_t agc_th;
 #endif
-	uint32_t search_th;
+	int32_t search_th;
 	int32_t shift; ///< phase shift
 	edge_t edge; ///< Edge Capture (0 - Rising Edge; 1 - Falling Edge)
 	opmode_t mode; ///< определено в MODE

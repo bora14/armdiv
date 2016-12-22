@@ -56,7 +56,8 @@ typedef enum
 	ED = 'DE',	///< Выбор фронта выходного сигнала
 	MO = 'OM',	///< Выбор режима работы МК (OPMODE_T)
 	CC = 'CC',
-	SA = 'AS'
+	SA = 'AS',
+	HT = 'TH'
 }Cmd_t;
 
 typedef enum

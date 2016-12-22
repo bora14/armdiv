@@ -96,7 +96,7 @@ int main()
 #ifdef INTERFACE_TYPE_MATLAB
 			if(ave++ < preset.ave_num)
 			{
-//				search(&preset);
+				search(&preset);
 				preset.pack->T += MDR_TIMER1->ARR;
 //				preset.pack->T = (((uint64_t)2028 * (uint64_t)preset.pack->T) >> 11) + 20 * (MDR_TIMER1->ARR & 0xFFFF);
 #ifndef AGC_RECU
@@ -108,7 +108,7 @@ int main()
 			}
 			else
 			{
-				search(&preset);
+//				search(&preset);
 
 #ifdef AGC_RECU
 				preset.pack->termo = preset.amp;
@@ -330,25 +330,26 @@ void preset_Save()
 int8_t search(Preset_t * preset)
 {
 	static uint8_t i;
-	static uint16_t period[AMP_SEARCH_POINTS_NUM];
+	static int32_t period[AMP_SEARCH_POINTS_NUM];
 	static int32_t amp[AMP_SEARCH_POINTS_NUM] = {0x7fffffff};
 
-	amp[i % AMP_SEARCH_POINTS_NUM] = preset->amp >> AGC_RECU_D;
-	period[i % AMP_SEARCH_POINTS_NUM] = preset->pack->T / preset->ave_num;
-
-	if(amp[i % AMP_SEARCH_POINTS_NUM] < 1000)
+	if((preset->amp >> AGC_RECU_D) < preset->search_th)
 		preset->dpll->intr[1] = 0;
 
 	if(preset->dpll->intr[1] != 0)
 		return 0;
 
-	if(amp[(i + (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM] - amp[i] > AMP_SEARCH_TH)
+	amp[i % AMP_SEARCH_POINTS_NUM] = preset->amp >> AGC_RECU_D;
+//	period[i % AMP_SEARCH_POINTS_NUM] = preset->pack->T / preset->ave_num;
+	period[i % AMP_SEARCH_POINTS_NUM] = preset->dpll->T0;
+
+	if(amp[(i + (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM] - amp[i] > preset->search_th)
 	{
-		if(amp[(i + (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM] - amp[(i + 1) % AMP_SEARCH_POINTS_NUM] > AMP_SEARCH_TH)
+		if(amp[(i + (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM] - amp[(i + 1) % AMP_SEARCH_POINTS_NUM] > preset->search_th)
 		{
 			preset->dpll->intr[1] = 1;
 
-			preset->dpll->T0 = period[(i + (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM] - preset->ave_num/2;
+			preset->dpll->T0 = period[(i - (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM] - 20;
 
 			memset(amp, 0x7fffffff, sizeof(int32_t) * AMP_SEARCH_POINTS_NUM);
 			i = 0;
