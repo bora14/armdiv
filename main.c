@@ -113,8 +113,8 @@ int main()
 
 				if(preset.mode == PRESSURE)
 				{
-					preset.pack->T = Calc_Pressures((MAX_AVE * (uint64_t)preset.pack->T)/preset.ave_num,
-							(10000 * (uint64_t)preset.pack->termo) >> (AGC_D + ADC_RESOL),
+					preset.pack->P = Calc_Pressures((MAX_AVE * (uint64_t)preset.pack->T)/preset.ave_num,
+							(3 * 10000 * (uint64_t)preset.pack->termo) >> (AGC_D + ADC_RESOL),
 							preset.sens_num);
 				}
 

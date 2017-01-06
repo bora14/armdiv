@@ -192,6 +192,7 @@ typedef struct
 {
 	uint16_t sot;
 	uint32_t T;
+	uint32_t P;
 	uint32_t termo;
 	uint8_t eot;
 }__attribute__((packed)) pack_t;
