@@ -15,9 +15,7 @@
 #ifdef DMA
 #include "dma.h"
 #endif
-#ifdef AGC_ON
 #include "agc.h"
-#endif
 
 #if defined(INTERFACE_TYPE_MATLAB)
 static pack_t pack = {SOT, 0, 0, EOT};
@@ -294,7 +292,7 @@ int ta_Send()
 		T = (float)preset->T[(preset->t-1) & 0x01];
 		Period = (T * Tq_ms) / (float)preset->ave_num;
 		pack.T = 0;
-		termo = (float)(pack.termo >> 10)/4096.0f * 0.0003f;
+		termo = (float)((3 * pack.termo) >> AGC_D)/4096.0f * 0.0001f;
 #ifndef AGC_RECU
 		pack.termo = 0;
 #endif
