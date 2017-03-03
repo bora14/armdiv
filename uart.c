@@ -435,27 +435,6 @@ void uart_ClearRxComplete()
 	uart_RxFlg = 0u;
 }
 
-void uart_CmdUpd()
-{
-	static int i;
-	uint8_t ch;
-
-//	ch = UART_Read(USE_UART, UART_TIMEOUT);
-	ch = UART_GetChar(USE_UART);
-
-	if((ch != '\r') && (i < (UART_DATA_BUF_LEN -1)))
-	{
-		uart_cmd.data[i++] = ch;
-		UART_PutChar(USE_UART, ch);
-	}
-	else
-	{
-		uart_cmd.data[i] = 0u;
-		dataRcv();
-		i = 0;
-	}
-}
-
 uart_cmd_t * uart_Cmd()
 {
 	return &uart_cmd;

@@ -184,7 +184,7 @@ int main()
 		if(uart_GetRxComplete())
 		{
 			uart_ClearRxComplete();
-			uart_CmdUpd();
+			cmdUpd();
 		}
 		if(preset.agc_start)
 		{

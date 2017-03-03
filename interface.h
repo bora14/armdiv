@@ -91,4 +91,6 @@ int ta_Send(); // передача данных в режиме тарировк
 
 int_mode_t get_Mode();
 
+void cmdUpd();
+
 #endif /* INTERFACE_H_ */

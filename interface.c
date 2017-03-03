@@ -24,7 +24,7 @@ static pack_t pack = {SOT, 0, 0, EOT};
 static pack_t pack = {SOT, 0, 0, 0, 0.0f, 0, 0};
 #endif
 
-static uart_cmd_t * _uart_cmd;
+static uart_cmd_t  uart_cmd;
 static Preset_t * preset;
 
 void interface_Init(Preset_t * _preset)
@@ -34,8 +34,6 @@ void interface_Init(Preset_t * _preset)
 	preset->pack = &pack;
 
 	UART_Configure(UART_WORK_BAUD);
-
-	_uart_cmd = uart_Cmd();
 }
 
 void dataTr()
@@ -73,9 +71,9 @@ void dataRcv()
 {
 	int32_t arg;
 
-	arg = atol((char *)&_uart_cmd->data[UART_MARK_LEN]);
+	arg = atol((char *)&uart_cmd.data[UART_MARK_LEN]);
 
-	switch(_uart_cmd->Mrk)
+	switch(uart_cmd.Mrk)
 	{
 #ifdef NUMBER_VERSION
 	case LS:
@@ -322,4 +320,28 @@ int ta_Send()
 	}
 
 	return idx;
+}
+
+void cmdUpd()
+{
+	static int i, j;
+	uint8_t ch[2];
+
+	ch[0] = UART_GetChar(USE_UART);
+	ch[1] = UART_GetChar(USE_UART);
+
+	for(j = 0; j < 2; j++)
+	{
+		if((ch[j] != '\r') && (i < (UART_DATA_BUF_LEN - 1u)))
+		{
+			uart_cmd.data[i++] = ch[j];
+			UART_PutChar(USE_UART, ch[j]);
+		}
+		else
+		{
+			uart_cmd.data[i] = 0u;
+			dataRcv();
+			i = 0;
+		}
+	}
 }

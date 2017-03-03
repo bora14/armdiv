@@ -58,10 +58,6 @@ uint8_t uart_GetRxComplete();
 
 void uart_ClearRxComplete();
 
-void uart_CmdUpd();
-
-uart_cmd_t * uart_Cmd();
-
 #ifdef __cplusplus
 }
 #endif
