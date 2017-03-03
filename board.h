@@ -13,7 +13,7 @@
 
 #define MCU_UCC		3	///< Напряжение питания МК, В
 //#define DMA	///< Включение ПДП режима UART
-//#define UART_FIFO_TR
+#define UART_FIFO_TR
 #define XMODEM
 #define POWER_SAVE_MODE_ON ///< Включение режима пониженного энергопотребления
 /**

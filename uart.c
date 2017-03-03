@@ -14,8 +14,6 @@ static uart_cmd_t uart_cmd;
 
 static uint8_t uart_RxFlg;
 
-static uint8_t uart_dataRdy;
-
 void UART_Configure(uint32_t baud)
 {
 	UART_InitTypeDef UART_InitType;
@@ -442,7 +440,8 @@ void uart_CmdUpd()
 	static int i;
 	uint8_t ch;
 
-	ch = UART_Read(USE_UART, UART_TIMEOUT);
+//	ch = UART_Read(USE_UART, UART_TIMEOUT);
+	ch = UART_GetChar(USE_UART);
 
 	if((ch != '\r') && (i < (UART_DATA_BUF_LEN -1)))
 	{
@@ -451,25 +450,10 @@ void uart_CmdUpd()
 	}
 	else
 	{
-		uart_SetDataRdy();
 		uart_cmd.data[i] = 0u;
+		dataRcv();
 		i = 0;
 	}
-}
-
-void uart_SetDataRdy()
-{
-	uart_dataRdy = 1u;
-}
-
-uint8_t uart_GetDataRdy()
-{
-	return uart_dataRdy;
-}
-
-void uart_ClearDataRdy()
-{
-	uart_dataRdy = 0u;
 }
 
 uart_cmd_t * uart_Cmd()

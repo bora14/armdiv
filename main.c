@@ -93,17 +93,15 @@ int main()
 			dpll_ClearUpdFlg();
 			dpll_Update();
 #ifdef INTERFACE_TYPE_MATLAB
-			if(ave++ < preset.ave_num)
-			{
-				preset.pack->T += MDR_TIMER1->ARR;
+
+			preset.pack->T += MDR_TIMER1->ARR + 1u;
 #ifndef AGC_RECU
-				if(preset.termo_src == Amplitude)
-					preset.pack->termo = preset.amp;
-				else
-					preset.pack->termo += termo_Val();
-#endif
-			}
+			if(preset.termo_src == Amplitude)
+				preset.pack->termo = preset.amp;
 			else
+				preset.pack->termo += termo_Val();
+#endif
+			if(++ave >= preset.ave_num)
 			{
 
 #ifdef AGC_RECU
@@ -117,6 +115,7 @@ int main()
 							(3 * 10000 * (uint64_t)preset.pack->termo) >> (AGC_D + ADC_RESOL),
 							preset.sens_num);
 				}
+//				preset.pack->P = preset.dpll->dAc[0];
 
 				setFlgDataTr();
 
@@ -186,11 +185,6 @@ int main()
 		{
 			uart_ClearRxComplete();
 			uart_CmdUpd();
-		}
-		if(uart_GetDataRdy())
-		{
-			uart_ClearDataRdy();
-			dataRcv();
 		}
 		if(preset.agc_start)
 		{

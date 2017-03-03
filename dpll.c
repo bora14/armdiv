@@ -215,6 +215,8 @@ void dpll_ClearPhi()
  */
 void dpll_Update()
 {
+	uint32_t T, T2;
+
 	if (dpll.intr[0] == 0) // проверка наличия сигнала на входе
 	{
 		/* Свипирование */
@@ -273,13 +275,15 @@ void dpll_Update()
 	}
 
 	/* Обновление параметров таймера на котором реализована ФАПЧ */
-	MDR_TIMER1->ARR = lroundf(dpll.T); // Обновление основания счета
+	T = lroundf(dpll.T);
+	T2 = (T >> 1) + (T & 0x1);
+	MDR_TIMER1->ARR = T; // Обновление основания счета
 
-	MDR_TIMER1->CCR1 = (MDR_TIMER1->ARR >> 1) + (MDR_TIMER1->ARR & 0x1); // Обновление регистра захвата CCR1
+	MDR_TIMER1->CCR1 = T2; // Обновление регистра захвата CCR1
 
 #if SCH_TYPE == 2
 
-	MDR_TIMER1->CCR2 = MDR_TIMER1->CCR1 - (preset->att * MDR_TIMER1->ARR)/360; // Обновление регистра захвата CCR2
-	MDR_TIMER1->CCR21 = MDR_TIMER1->ARR - (preset->att * MDR_TIMER1->ARR)/360; // Обновление регистра захвата CCR21
+	MDR_TIMER1->CCR2 = T2 - (preset->att * T)/360; // Обновление регистра захвата CCR2
+	MDR_TIMER1->CCR21 = T - (preset->att * T)/360; // Обновление регистра захвата CCR21
 #endif
 }
