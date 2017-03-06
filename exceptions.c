@@ -196,7 +196,7 @@ void UART1_IRQHandler(void)
 
 void UART2_IRQHandler(void)
 {
-	UART_ClearITPendingBit(USE_UART, UART_IT_RX);
+	UART_ClearITPendingBit(USE_UART, UART_IT_RT);
 
 	uart_SetRxComplete();
 }

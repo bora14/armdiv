@@ -40,7 +40,7 @@ void UART_Configure(uint32_t baud)
 
 	NVIC_EnableIRQ(UART2_IRQn);
 
-	UART_ITConfig(USE_UART, UART_IT_RX, ENABLE);
+	UART_ITConfig(USE_UART, UART_IT_RT, ENABLE);
 
 	UART_Cmd(USE_UART, ENABLE);
 }

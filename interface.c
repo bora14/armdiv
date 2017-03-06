@@ -324,24 +324,21 @@ int ta_Send()
 
 void cmdUpd()
 {
-	static int i, j;
-	uint8_t ch[2];
+	static int i;
+	uint8_t ch;
 
-	ch[0] = UART_GetChar(USE_UART);
-	ch[1] = UART_GetChar(USE_UART);
+	ch = UART_GetChar(USE_UART);
 
-	for(j = 0; j < 2; j++)
+
+	if((ch != '\r') && (i < (UART_DATA_BUF_LEN - 1u)))
 	{
-		if((ch[j] != '\r') && (i < (UART_DATA_BUF_LEN - 1u)))
-		{
-			uart_cmd.data[i++] = ch[j];
-			UART_PutChar(USE_UART, ch[j]);
-		}
-		else
-		{
-			uart_cmd.data[i] = 0u;
-			dataRcv();
-			i = 0;
-		}
+		uart_cmd.data[i++] = ch;
+		UART_PutChar(USE_UART, ch);
+	}
+	else
+	{
+		uart_cmd.data[i] = 0u;
+		dataRcv();
+		i = 0;
 	}
 }
