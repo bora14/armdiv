@@ -92,21 +92,20 @@ int main()
 		if(dpll_UpdFlg())
 		{
 			dpll_ClearUpdFlg();
+
 			dpll_Update();
 #ifdef INTERFACE_TYPE_MATLAB
-			if(ave++ < preset.ave_num)
-			{
-				search(&preset);
-				preset.pack->T += MDR_TIMER1->ARR;
-//				preset.pack->T = (((uint64_t)2028 * (uint64_t)preset.pack->T) >> 11) + 20 * (MDR_TIMER1->ARR & 0xFFFF);
+
+			preset.pack->T += (MDR_TIMER1->ARR + 1);
+
 #ifndef AGC_RECU
-				if(preset.termo_src == Amplitude)
-					preset.pack->termo = preset.amp;
-				else
-					preset.pack->termo += termo_Val();
-#endif
-			}
+			if(preset.termo_src == Amplitude)
+				preset.pack->termo = preset.amp;
 			else
+				preset.pack->termo += termo_Val();
+#endif
+
+			if(++ave >= preset.ave_num)
 			{
 //				search(&preset);
 
@@ -194,6 +193,11 @@ int main()
 		{
 			preset.agc_start = 0;
 			agc_Amp();
+
+			if(preset.amp < preset.search_th)
+				preset.search = 0;
+
+			search(&preset);
 		}
 
 #ifdef POWER_SAVE_MODE_ON
@@ -298,6 +302,7 @@ int preset_Init()
 		preset.mode = WORK;
 	}
 
+	preset.search = 0;
 	preset.agc_start = 0;
 	preset.t = 0;
 	preset.amp = 0;
@@ -329,34 +334,39 @@ void preset_Save()
  */
 int8_t search(Preset_t * preset)
 {
-	static uint8_t i;
+	static uint16_t i;
 	static int32_t period[AMP_SEARCH_POINTS_NUM];
 	static int32_t amp[AMP_SEARCH_POINTS_NUM] = {0x7fffffff};
+	int32_t D1, D2;
 
-	if((preset->amp >> AGC_RECU_D) < preset->search_th)
-		preset->dpll->intr[1] = 0;
-
-	if(preset->dpll->intr[1] != 0)
-		return 0;
+	if(preset->search == 1)
+		return 1;
 
 	amp[i % AMP_SEARCH_POINTS_NUM] = preset->amp >> AGC_RECU_D;
-//	period[i % AMP_SEARCH_POINTS_NUM] = preset->pack->T / preset->ave_num;
 	period[i % AMP_SEARCH_POINTS_NUM] = preset->dpll->T0;
 
-	if(amp[(i + (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM] - amp[i] > preset->search_th)
+	// Правая разность
+	D1 = amp[(i + (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM] - amp[i % AMP_SEARCH_POINTS_NUM];
+	// Левая разность
+	D2 = amp[(i + (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM] - amp[(i + 1) % AMP_SEARCH_POINTS_NUM];
+
+	if(abs(D1) > 100000)
 	{
-		if(amp[(i + (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM] - amp[(i + 1) % AMP_SEARCH_POINTS_NUM] > preset->search_th)
+		if(abs(D2) > 100000)
 		{
-			preset->dpll->intr[1] = 1;
+			if(abs(D1 - D2) < 10000)
+			{
+				preset->search = 1;
 
-			preset->dpll->T0 = period[(i - (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM] - 20;
+				preset->dpll->T0 = period[(i - (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM];
 
-			memset(amp, 0x7fffffff, sizeof(int32_t) * AMP_SEARCH_POINTS_NUM);
-			i = 0;
+				memset(amp, 0x7fffffff, sizeof(int32_t) * AMP_SEARCH_POINTS_NUM);
+				i = 0;
+			}
 		}
 	}
 
 	i++;
 
-	return 1;
+	return 0;
 }

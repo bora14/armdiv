@@ -215,7 +215,7 @@ void dpll_ClearPhi()
  */
 void dpll_Update()
 {
-	if ((dpll.intr[0] == 0) || (dpll.intr[1] == 0)) // проверка наличия сигнала на входе
+	if (preset->search != 1) // проверка наличия сигнала на входе
 	{
 		/* Свипирование */
 		dpll.T0-=1;
@@ -243,9 +243,8 @@ void dpll_Update()
 
 		dpll.ld = 0;
 	}
-	else if(dpll.intr[1] != 0)
+	else
 	{
-		dpll.intr[0] = 0;
 		LED_On(LED1);
 #ifdef AGC_ON
 		if(preset->termo_src == Amplitude)
