@@ -224,7 +224,7 @@ uint8_t xmodem_wait_ch()
 		{
 			uart_ClearRxComplete();
 
-			ch = UART_GetChar(USE_UART);
+			ch = UART_ReceiveData(USE_UART);
 
 			break;
 		}
