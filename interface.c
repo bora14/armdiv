@@ -58,7 +58,6 @@ void dataTr()
 	pack.termo = 0;
 #endif
 
-	pack.T = 0;
 #endif
 }
 
