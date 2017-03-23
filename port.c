@@ -69,26 +69,6 @@ void Port_Configure()
 	/*************************************/
 	PORT_StructInit(&Port);
 
-//#ifdef RELEASE
-//	Port.PORT_PULL_UP = PORT_PULL_UP_ON;
-//	Port.PORT_PULL_DOWN = PORT_PULL_DOWN_OFF;
-//	Port.PORT_PD_SHM = PORT_PD_SHM_OFF;
-//	Port.PORT_PD = PORT_PD_DRIVER;
-//	Port.PORT_GFEN = PORT_GFEN_OFF;
-//	Port.PORT_FUNC = PORT_FUNC_ALTER;
-//	Port.PORT_SPEED = PORT_SPEED_MAXFAST;
-//	Port.PORT_MODE = PORT_MODE_DIGITAL;
-//
-//	/* Configure PORTD pins 1 (UART2_TX) as output */
-//	Port.PORT_OE = PORT_OE_OUT;
-//	Port.PORT_Pin = PORT_Pin_1;
-//	PORT_Init(MDR_PORTD, &Port);
-//
-//	/* Configure PORTD pins 0 (UART2_RX) as input */
-//	Port.PORT_OE = PORT_OE_IN;
-//	Port.PORT_Pin = PORT_Pin_0;
-//	PORT_Init(MDR_PORTD, &Port);
-//#else
 	Port.PORT_PULL_UP = PORT_PULL_UP_ON;
 	Port.PORT_PULL_DOWN = PORT_PULL_DOWN_OFF;
 	Port.PORT_PD_SHM = PORT_PD_SHM_OFF;
@@ -148,28 +128,6 @@ void Port_Configure()
 
 	PORT_Init(MDR_PORTD, &Port);
 
-#ifdef BUTTON_CTRL
-	/* LEFT-RIGHT-DOWN Buttons */
-	PORT_StructInit(&Port);
-
-	Port.PORT_OE = PORT_OE_IN;
-	Port.PORT_MODE = PORT_MODE_DIGITAL;
-	Port.PORT_FUNC = PORT_FUNC_PORT;
-	Port.PORT_SPEED = PORT_SPEED_SLOW;
-
-	Port.PORT_Pin = PORT_Pin_3;
-
-	PORT_Init(MDR_PORTE, &Port); // Left
-
-	Port.PORT_Pin = PORT_Pin_6;
-
-	PORT_Init(MDR_PORTB, &Port); // Right
-
-	Port.PORT_Pin = PORT_Pin_1;
-
-	PORT_Init(MDR_PORTE, &Port); // Down
-#endif
-
 	/*************************************/
 	/* LED */
 	/*************************************/
@@ -181,4 +139,13 @@ void Port_Configure()
 	Port.PORT_FUNC = PORT_FUNC_PORT;
 	Port.PORT_SPEED = PORT_SPEED_FAST;
 	PORT_Init(LED_PORT, &Port);
+
+#ifdef OSC_TEST
+	Port.PORT_Pin = PORT_Pin_0;
+	Port.PORT_OE = PORT_OE_OUT;
+	Port.PORT_MODE = PORT_MODE_DIGITAL;
+	Port.PORT_FUNC = PORT_FUNC_ALTER;
+	Port.PORT_SPEED = PORT_SPEED_FAST;
+	PORT_Init(MDR_PORTB, &Port);
+#endif
 }

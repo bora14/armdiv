@@ -281,9 +281,6 @@ void dpll_Update()
 
 	MDR_TIMER1->CCR1 = T2; // Обновление регистра захвата CCR1
 
-#if SCH_TYPE == 2
-
 	MDR_TIMER1->CCR2 = T2 - (preset->att * T)/360; // Обновление регистра захвата CCR2
 	MDR_TIMER1->CCR21 = T - (preset->att * T)/360; // Обновление регистра захвата CCR21
-#endif
 }

@@ -264,6 +264,8 @@ void     Timer2_IRQHandler(void)
 	while(1);
 }
 
+static uint16_t uart_freq;
+
 void     Timer3_IRQHandler(void)
 {
 	if (MDR_TIMER3->STATUS & TIMER_STATUS_CNT_ARR)
@@ -271,7 +273,14 @@ void     Timer3_IRQHandler(void)
 		MDR_TIMER3->STATUS &= ~TIMER_STATUS_CNT_ARR;
 
 		if( (preset->mode != UPLOAD) && (preset->mode != DOWNLOAD))
+		{
 			preset->agc_start = 1;
+			if(uart_freq++ > UART_FREQ)
+			{
+				uart_freq = 0;
+				setFlgDataTr();
+			}
+		}
 		else
 		{
 			xmodem_set_timeout();

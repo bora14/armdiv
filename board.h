@@ -31,6 +31,8 @@
 #define INTERFACE_TYPE_MATLAB
 //#define INTERFACE_TYPE_APP
 
+#define OSC_TEST
+
 #if (!defined(INTERFACE_TYPE_MATLAB)) && (!defined(INTERFACE_TYPE_APP))
 #	error "undefined INTERFACE_TYPE. Must be INTERFACE_TYPE_APP or INTERFACE_TYPE_MATLAB"
 #endif
@@ -103,7 +105,9 @@
 #endif
 #endif
 
-#define AGC_FREQ	(DPLL_T_MAX >> 1)
+#define AGC_FREQ	((DPLL_T_MAX >> 1)-1)
+
+#define UART_FREQ	((CPU_MCK/50)/AGC_FREQ)
 
 /**
  * \defgroup LOOP_FILTER_ORDER Порядок петлевого фильтра

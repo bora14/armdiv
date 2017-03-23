@@ -287,7 +287,7 @@ int ta_Send()
 		UART_PutChar(USE_UART, TA_MARK);
 #endif
 #ifdef INTERFACE_TYPE_MATLAB
-		T = (float)preset->T[(preset->t-1) & 0x01];
+		T = (float)preset->pack->T;
 		Period = (T * Tq_ms) / (float)preset->ave_num;
 		pack.T = 0;
 		termo = (float)((3 * pack.termo) >> AGC_D)/4096.0f * 0.0001f;

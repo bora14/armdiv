@@ -94,7 +94,7 @@ int main()
 			dpll_Update();
 #ifdef INTERFACE_TYPE_MATLAB
 
-			preset.pack->T += MDR_TIMER1->ARR + 1u;
+			preset.T[0] += MDR_TIMER1->ARR;
 #ifndef AGC_RECU
 			if(preset.termo_src == Amplitude)
 				preset.pack->termo = preset.amp;
@@ -107,7 +107,8 @@ int main()
 #ifdef AGC_RECU
 				preset.pack->termo = preset.amp;
 #endif
-				preset.T[preset.t & 0x01] = preset.pack->T;
+				preset.pack->T = preset.T[0] + preset.ave_num;
+				preset.T[0] = 0;
 
 				if(preset.mode == PRESSURE)
 				{
@@ -117,7 +118,7 @@ int main()
 				}
 //				preset.pack->P = preset.dpll->dAc[0];
 
-				setFlgDataTr();
+//				setFlgDataTr();
 
 				ave = 0;
 
