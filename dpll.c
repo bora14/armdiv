@@ -97,8 +97,8 @@ int32_t dpll_Filt(dpll_t * dpll_)
 //	dpll.Phi = dpll_LoopFilter(dpll_->Acc/10.0f, NULL, NULL, 2);
 	dpll.Phi = dpll_LoopFilter((3600*dpll_->Acc)/(int32_t)DPLL_TIMER->ARR, NULL, NULL, 2);
 
-	dpll.Phi += ((dpll.Acc - (float)dpll.shift) / 20.0f);
-//	dpll.Phi += (dpll.Acc / 20.0f);
+//	dpll.Phi += ((dpll.Acc - (float)dpll.shift) / 20.0f);
+	dpll.Phi += (dpll.Acc / 20.0f);
 
 	/**************************/
 
@@ -215,13 +215,13 @@ void dpll_ClearPhi()
  */
 void dpll_Update()
 {
-	if (preset->search != 1) // проверка наличия сигнала на входе
+	if (preset->search == 0) // проверка наличия сигнала на входе
 	{
 		/* Свипирование */
-		dpll.T0-=1;
-		if(dpll.T0 > (DPLL_T_MAX + (DPLL_T_MIN - DPLL_T_MAX)/3))
+		dpll.T0 -= 1;
+		if(dpll.T0 > (CPU_MCK/15000))
 			dpll.T0 -= 2;
-		if(dpll.T0 > (DPLL_T_MAX + 2*(DPLL_T_MIN - DPLL_T_MAX)/3))
+		if(dpll.T0 > (CPU_MCK/10000))
 			dpll.T0 -= 3;
 
 		LED_Blink(LED1);
@@ -243,7 +243,18 @@ void dpll_Update()
 
 		dpll.ld = 0;
 	}
-	else
+	else if((preset->search > 0) && (preset->search < AMP_SEARCH_ACU))
+	{
+		preset->search++;
+
+		if(preset->search == AMP_SEARCH_ACU)
+		{
+			TIMER_ITConfig(MDR_TIMER1, TIMER_STATUS_CNT_ARR, DISABLE);
+			TIMER_ITConfig(MDR_TIMER1, TIMER_STATUS_CCR_CAP_CH3, ENABLE);
+		}
+		return;
+	}
+	else// if(preset->search == 50)
 	{
 		LED_On(LED1);
 #ifdef AGC_ON
@@ -278,9 +289,6 @@ void dpll_Update()
 
 	MDR_TIMER1->CCR1 = (MDR_TIMER1->ARR >> 1) + (MDR_TIMER1->ARR & 0x1); // Обновление регистра захвата CCR1
 
-#if SCH_TYPE == 2
-
 	MDR_TIMER1->CCR2 = MDR_TIMER1->CCR1 - (preset->att * MDR_TIMER1->ARR)/360; // Обновление регистра захвата CCR2
 	MDR_TIMER1->CCR21 = MDR_TIMER1->ARR - (preset->att * MDR_TIMER1->ARR)/360; // Обновление регистра захвата CCR21
-#endif
 }

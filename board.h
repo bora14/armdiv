@@ -26,8 +26,9 @@
 //#define AGC_ON			///< включение АРУ
 #define AGC_RECU		///< Рекурсивная оценка значения АЦП
 #define AGC_RECU_D					9
-#define AMP_SEARCH_POINTS_NUM 		256
+#define AMP_SEARCH_POINTS_NUM 		500 ///< максимальная длина АЧХ для поиска
 #define AMP_SEARCH_TH				2000
+#define AMP_SEARCH_ACU				10 /// количество периодов для "втягивания" ФАПЧ
 
 //#define FLL_ASSISTED	///< петля ФАПЧ с частотной поддержкой
 
@@ -83,7 +84,7 @@
 #define MAX_SWEEP 	(30u)
 #define MIN_SWEEP 	(1u)
 #define MAX_AVE 	(1000)
-#define MIN_AVE 	(100)
+#define MIN_AVE 	(10)
 #define AVE_NUM 	(200)
 #define DPLL_F_MAX 	(20000u) 	///< Верхняя граница диапазона частот, Гц
 #define DPLL_F_MIN 	(5000u)		///< Нижняя граница диапазона частот, Гц
@@ -243,8 +244,11 @@ typedef struct
 #ifdef AGC_ON
 	int16_t agc_th;
 #endif
-	int32_t search_th;
-	uint8_t search;
+	int32_t search_th;  ///< порог для разности крайних точек АЧХ (DL, DE)
+	uint8_t search;		///< флаг "сигнал найден"
+	uint16_t search_len; ///< длина выборки, по которой строится АЧХ
+	uint16_t search_ds; ///< порог для разности (DE-DL)
+	uint16_t search_fl; ///< порог потери захвата
 	int32_t shift; ///< phase shift
 	edge_t edge; ///< Edge Capture (0 - Rising Edge; 1 - Falling Edge)
 	opmode_t mode; ///< определено в MODE
@@ -254,6 +258,7 @@ typedef struct
 	uint8_t agc_start; ///< Одиночный запуск АРУ
 	uint32_t amp; ///< Огибающая вхоного сигнала
 	int32_t T[2]; 		///< Current Period Natural Freq
+	uint8_t es; ///< вкл/выкл режима захвата. Полезно при измерении АЧХ датчика.
 	dpll_t * dpll;
 	pack_t * pack;
 }__attribute__((packed)) Preset_t;

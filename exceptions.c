@@ -229,7 +229,7 @@ static int8_t sweep;
 
 void     Timer1_IRQHandler(void)
 {
-	if (MDR_TIMER1->STATUS & TIMER_STATUS_CCR_CAP_CH3)
+	if ((MDR_TIMER1->STATUS & TIMER_STATUS_CCR_CAP_CH3) && (MDR_TIMER1->IE & TIMER_STATUS_CCR_CAP_CH3))
 	{
 		MDR_TIMER1->STATUS &= ~TIMER_STATUS_CCR_CAP_CH3;
 
@@ -239,14 +239,12 @@ void     Timer1_IRQHandler(void)
 
 		preset->dpll->intr[0] = 1;
 
-		sweep = 0;
-
 		dpll_SetUpdFlg();
 
 		preset->dpll->cnt ^= 0x1;
 	}
 
-	if (MDR_TIMER1->STATUS & TIMER_STATUS_CNT_ARR)
+	if ((MDR_TIMER1->STATUS & TIMER_STATUS_CNT_ARR) && (MDR_TIMER1->IE & TIMER_STATUS_CNT_ARR))
 	{
 
 		MDR_TIMER1->STATUS &= ~TIMER_STATUS_CNT_ARR;

@@ -245,6 +245,27 @@ void dataRcv()
 		preset_Save();
 		uart_mini_printf(USE_UART, CMD_SUCCESS);
 		break;
+	case ES:
+		preset->es = arg;
+		uart_mini_printf(USE_UART, CMD_SUCCESS);
+		break;
+	case LN:
+		if((arg > AMP_SEARCH_POINTS_NUM) || (arg < 3))
+			uart_mini_printf(USE_UART, CMD_INC_ARG);
+		else
+		{
+			preset->search_len = arg;
+			uart_mini_printf(USE_UART, CMD_SUCCESS);
+		}
+		break;
+	case DS:
+		preset->search_ds = arg;
+		uart_mini_printf(USE_UART, CMD_SUCCESS);
+		break;
+	case FL:
+		preset->search_fl = arg;
+		uart_mini_printf(USE_UART, CMD_SUCCESS);
+		break;
 	default:
 		uart_mini_printf(USE_UART, CMD_UNKNOWN);
 		break;

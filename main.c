@@ -91,6 +91,9 @@ int main()
 	{
 		if(dpll_UpdFlg())
 		{
+
+			search(&preset);
+
 			dpll_ClearUpdFlg();
 
 			dpll_Update();
@@ -107,7 +110,6 @@ int main()
 
 			if(++ave >= preset.ave_num)
 			{
-//				search(&preset);
 
 #ifdef AGC_RECU
 				preset.pack->termo = preset.amp;
@@ -194,10 +196,13 @@ int main()
 			preset.agc_start = 0;
 			agc_Amp();
 
-			if(preset.amp < preset.search_th)
+			if(((preset.amp >> AGC_RECU_D) < preset.search_fl) && (preset.search == AMP_SEARCH_ACU))
+			{
+				// Переход в режим поиска
+				TIMER_ITConfig(MDR_TIMER1, TIMER_STATUS_CCR_CAP_CH3, DISABLE); // отключение захвата
+				TIMER_ITConfig(MDR_TIMER1, TIMER_STATUS_CNT_ARR, ENABLE); // включение сканирования
 				preset.search = 0;
-
-			search(&preset);
+			}
 		}
 
 #ifdef POWER_SAVE_MODE_ON
@@ -300,8 +305,13 @@ int preset_Init()
 	#endif
 		preset.agc_on = 1;
 		preset.mode = WORK;
+		preset.search_th = 170;
+		preset.search_len = 100;
+		preset.search_ds = 70;
+		preset.search_fl = 1000;
 	}
 
+	preset.es = 1;
 	preset.search = 0;
 	preset.agc_start = 0;
 	preset.t = 0;
@@ -336,37 +346,33 @@ int8_t search(Preset_t * preset)
 {
 	static uint16_t i;
 	static int32_t period[AMP_SEARCH_POINTS_NUM];
-	static int32_t amp[AMP_SEARCH_POINTS_NUM] = {0x7fffffff};
-	int32_t D1, D2;
+	static int32_t amp[AMP_SEARCH_POINTS_NUM];
+	int32_t DL, DE;
 
-	if(preset->search == 1)
+	if((preset->search > 0) || (preset->es == 0))
 		return 1;
 
-	amp[i % AMP_SEARCH_POINTS_NUM] = preset->amp >> AGC_RECU_D;
-	period[i % AMP_SEARCH_POINTS_NUM] = preset->dpll->T0;
+	amp[i % preset->search_len] = preset->amp >> AGC_RECU_D;
+	period[i % preset->search_len] = preset->dpll->T0;
+
+	if(i++ < preset->search_len)
+		return 0;
 
 	// Правая разность
-	D1 = amp[(i + (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM] - amp[i % AMP_SEARCH_POINTS_NUM];
+	DL = amp[(i + (preset->search_len/2 + 1)) % preset->search_len] - amp[i % preset->search_len];
 	// Левая разность
-	D2 = amp[(i + (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM] - amp[(i + 1) % AMP_SEARCH_POINTS_NUM];
+	DE = amp[(i + (preset->search_len/2 + 1)) % preset->search_len] - amp[(i + 1) % preset->search_len];
 
-	if(abs(D1) > 100000)
+	if((DL > preset->search_th) && (DE > preset->search_th))
 	{
-		if(abs(D2) > 100000)
+		if(((DE - DL) > 0) && ((DE - DL) < preset->search_ds))
 		{
-			if(abs(D1 - D2) < 10000)
-			{
-				preset->search = 1;
+			preset->search = 1;
 
-				preset->dpll->T0 = period[(i - (AMP_SEARCH_POINTS_NUM/2 + 1)) % AMP_SEARCH_POINTS_NUM];
-
-				memset(amp, 0x7fffffff, sizeof(int32_t) * AMP_SEARCH_POINTS_NUM);
-				i = 0;
-			}
+			preset->dpll->T0 = period[(i - 1 + (preset->search_len/2 + 1)) % preset->search_len];
+			i = 0;
 		}
 	}
-
-	i++;
 
 	return 0;
 }

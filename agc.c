@@ -71,8 +71,6 @@ int32_t agc_Amp()
 	static int32_t rem;
 	int32_t amp = 0, AMP;
 
-//	ADC_SetChan(Amplitude);
-
 	ADC_Read((uint16_t * )&amp);
 
 	if(preset->termo_src == Amplitude)
