@@ -41,7 +41,7 @@
 
 /* Target system parameters */
 #ifdef RELEASE
-#define CPU_MCK		(96000000u) //(Hz)
+#define CPU_MCK		(80000000u) //(Hz)
 #else
 #define CPU_MCK		(80000000u) //(Hz)
 #endif

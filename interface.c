@@ -76,7 +76,27 @@ void dataRcv()
 	{
 #ifdef NUMBER_VERSION
 	case LS:
-		uart_mini_printf(USE_UART, "\r\n %s \r\n", NUMBER_VERSION);
+		uart_mini_printf(USE_UART, "\r\n NUMBER_VERSION %s \r\n", NUMBER_VERSION);
+		uart_mini_printf(USE_UART, "\r\n sweep %ld \r\n", preset->sweep);
+		uart_mini_printf(USE_UART, "\r\n ave_num %ld \r\n", preset->ave_num);
+		uart_mini_printf(USE_UART, "\r\n Tmax %ld \r\n", preset->Tmax);
+		uart_mini_printf(USE_UART, "\r\n Tmin %ld \r\n", preset->Tmin);
+		uart_mini_printf(USE_UART, "\r\n sens_num %d \r\n", preset->sens_num);
+		uart_mini_printf(USE_UART, "\r\n freq %ld \r\n", preset->freq);
+#if SCH_TYPE == 1
+		uart_mini_printf(USE_UART, "\r\n duty_cycle %ld \r\n", preset->duty_cycle);
+#elif SCH_TYPE == 2
+		uart_mini_printf(USE_UART, "\r\n att %d \r\n", preset->att);
+		uart_mini_printf(USE_UART, "\r\n att0 %d \r\n", preset->att0);
+		uart_mini_printf(USE_UART, "\r\n agc_on %c \r\n", preset->agc_on);
+#endif
+#ifdef AGC_ON
+		uart_mini_printf(USE_UART, "\r\n agc_th %d \r\n", preset->agc_th);
+#endif
+		uart_mini_printf(USE_UART, "\r\n shift %ld \r\n", preset->shift);
+		uart_mini_printf(USE_UART, "\r\n edge %d \r\n", preset->edge);
+		uart_mini_printf(USE_UART, "\r\n mode %d \r\n", preset->mode);
+		uart_mini_printf(USE_UART, "\r\n termo_src %d \r\n", preset->termo_src);
 		break;
 #endif
 	case UP:
@@ -220,6 +240,10 @@ void dataRcv()
 			preset->mode = PRESSURE;
 			interface_Init(preset);
 		}
+		if(arg == STOP)
+		{
+			preset->mode = STOP;
+		}
 		break;
 #ifdef AGC_ON
 	case TH:
@@ -255,6 +279,10 @@ void dataRcv()
 			uart_mini_printf(USE_UART,"\t %s \t", ta_SensID(preset->sens_num));
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
 		}
+		break;
+	case FR:
+		preset->freq = arg;
+		uart_mini_printf(USE_UART, CMD_SUCCESS);
 		break;
 	default:
 		uart_mini_printf(USE_UART, CMD_UNKNOWN);

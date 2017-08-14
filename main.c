@@ -181,6 +181,10 @@ int main()
 				if(ta_Send() == 0)
 					clearFlgDataTr();
 			}
+			else if(preset.mode == STOP)
+			{
+				clearFlgDataTr();
+			}
 		}
 		if(uart_GetRxComplete())
 		{

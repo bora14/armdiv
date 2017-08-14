@@ -215,7 +215,8 @@ typedef enum
 	TA = 1,			///< Тарировка
 	UPLOAD = 2,		///< Загрузка данных
 	DOWNLOAD = 3,	///< Выгрузка данных
-	PRESSURE = 4	///< Измерение давления
+	PRESSURE = 4,	///< Измерение давления
+	STOP = 5		///< В этом режиме СЦВД не выдает измерения
 }opmode_t;
 /** @} */
 
@@ -236,6 +237,7 @@ typedef struct
 	int32_t Tmax; 		///< Max Period Natural Freq
 	int32_t Tmin; 		///< Min Period Natural Freq
 	int8_t sens_num;	///< Номер градуированного датчика
+	int32_t freq;		///< Истинная частота работы МК
 #if SCH_TYPE == 1
 	int32_t duty_cycle; ///< PWR
 #elif SCH_TYPE == 2
