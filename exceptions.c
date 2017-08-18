@@ -196,9 +196,13 @@ void UART1_IRQHandler(void)
 
 void UART2_IRQHandler(void)
 {
+	__disable_irq();
+
 	UART_ClearITPendingBit(USE_UART, UART_IT_RT | UART_IT_RX);
 
 	uart_SetRxComplete();
+
+	__enable_irq();
 }
 
 
@@ -229,6 +233,8 @@ static int8_t sweep;
 
 void     Timer1_IRQHandler(void)
 {
+	__disable_irq();
+
 	if (MDR_TIMER1->STATUS & TIMER_STATUS_CCR_CAP_CH3)
 	{
 		MDR_TIMER1->STATUS &= ~TIMER_STATUS_CCR_CAP_CH3;
@@ -257,6 +263,7 @@ void     Timer1_IRQHandler(void)
 			dpll_SetUpdFlg();
 		}
 	}
+	__enable_irq();
 }
 
 void     Timer2_IRQHandler(void)
@@ -268,6 +275,8 @@ static uint16_t uart_freq;
 
 void     Timer3_IRQHandler(void)
 {
+	__disable_irq();
+
 	if (MDR_TIMER3->STATUS & TIMER_STATUS_CNT_ARR)
 	{
 		MDR_TIMER3->STATUS &= ~TIMER_STATUS_CNT_ARR;
@@ -286,6 +295,7 @@ void     Timer3_IRQHandler(void)
 			xmodem_set_timeout();
 		}
 	}
+	__enable_irq();
 }
 
 void     ADC_IRQHandler(void)

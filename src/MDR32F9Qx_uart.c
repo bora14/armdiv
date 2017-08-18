@@ -470,8 +470,6 @@ void UART_SendData(MDR_UART_TypeDef* UARTx, uint16_t Data)
   assert_param(IS_UART_DATA(Data));
 
   /* Transmit Data */
-  while(UARTx->FR & UART_FLAG_TXFF);
-
   UARTx->DR = (Data & (uint16_t)0x01FF);
 }
 

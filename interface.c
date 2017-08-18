@@ -52,7 +52,7 @@ void dataTr()
 
 	for(i = 0; i < MESSAGE_LEN; i++)
 	{
-		UART_PutChar(USE_UART, *p++);
+		UART_PutChar(USE_UART, (uint16_t) *p++);
 	}
 #ifndef AGC_RECU
 	pack.termo = 0;

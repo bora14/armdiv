@@ -88,6 +88,7 @@ int32_t dpll_Filt(dpll_t * dpll_)
 
 	dpll.shift = (phase * (int32_t)DPLL_TIMER->ARR) / 360 ;
 
+	preset->pack->P = dpll.dAc[pos];
 	dpll_->Acc = dpll_->dAc[pos] + dpll.shift;
 //	if(abs(dpll.Acc) > (DPLL_TIMER->ARR >> 3))
 //		dpll.Acc = (DPLL_TIMER->ARR >> 3) * sign(dpll.Acc);
@@ -220,17 +221,17 @@ void dpll_Update()
 	if (dpll.intr[0] == 0) // проверка наличия сигнала на входе
 	{
 		/* Свипирование */
-		dpll.T0--;
+		dpll.T0++;
 		if(dpll.T0 > (DPLL_T_MAX + (DPLL_T_MIN - DPLL_T_MAX)/3))
-			dpll.T0 -= 2;
+			dpll.T0 += 2;
 		if(dpll.T0 > (DPLL_T_MAX + 2*(DPLL_T_MIN - DPLL_T_MAX)/3))
-			dpll.T0 -= 4;
+			dpll.T0 += 4;
 
 		LED_Blink(LED1);
 
-		if(dpll.T0 < preset->Tmax) // Проверка границ интеравала свипирования
+		if(dpll.T0 > preset->Tmin) // Проверка границ интеравала свипирования
 		{
-			dpll.T0 = preset->Tmin;
+			dpll.T0 = preset->Tmax;
 		}
 
 		/*****************/

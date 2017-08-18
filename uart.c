@@ -33,9 +33,9 @@ void UART_Configure(uint32_t baud)
 	UART_Init(USE_UART, &UART_InitType);
 
 #ifdef DMA
-	UART_DMAConfig(USE_UART, UART_IT_FIFO_LVL_2words, UART_IT_FIFO_LVL_2words);
+	UART_DMAConfig(USE_UART, UART_IT_FIFO_LVL_12words, UART_IT_FIFO_LVL_12words);
 
-	UART_DMACmd(USE_UART,(UART_DMA_RXE | UART_DMA_TXE), DISABLE);
+	UART_DMACmd(USE_UART,(UART_DMA_RXE | UART_DMA_TXE | UART_DMA_ONERR), ENABLE);
 #endif
 
 	NVIC_EnableIRQ(UART2_IRQn);
@@ -152,6 +152,8 @@ uint8_t uart_mini_printf(MDR_UART_TypeDef* uart, char *format, ...)
 	long_flag = FALSE;
 	alt_p_c = FALSE;
 	min_size = UART_DATA_BUF_LEN-1;
+
+	while(UART_GetFlagStatus(uart, UART_FLAG_TXFE) != SET);
 
 	va_start(arg_ptr, format);   // make arg_ptr point to the first unnamed arg
 	for (p = (uint8_t *) format; *p; p++)

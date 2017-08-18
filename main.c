@@ -116,9 +116,6 @@ int main()
 							(3 * 10000 * (uint64_t)preset.pack->termo) >> (AGC_D + ADC_RESOL),
 							preset.sens_num);
 				}
-//				preset.pack->P = preset.dpll->dAc[0];
-
-//				setFlgDataTr();
 
 				ave = 0;
 
