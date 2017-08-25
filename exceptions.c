@@ -225,7 +225,6 @@ void     WWDG_IRQHandler(void)
 #include "dpll.h"
 #include <math.h>
 #include <stdlib.h>
-static int8_t sweep;
 
 void     Timer1_IRQHandler(void)
 {
@@ -239,9 +238,14 @@ void     Timer1_IRQHandler(void)
 
 		preset->dpll->intr[0] = 1;
 
-		dpll_SetUpdFlg();
+		if(preset->search > 0)
+		{
+			dpll_SetUpdFlg();
+			preset->sweep_cnt = 0;
+		}
 
 		preset->dpll->cnt ^= 0x1;
+
 	}
 
 	if ((MDR_TIMER1->STATUS & TIMER_STATUS_CNT_ARR) && (MDR_TIMER1->IE & TIMER_STATUS_CNT_ARR))
@@ -249,9 +253,9 @@ void     Timer1_IRQHandler(void)
 
 		MDR_TIMER1->STATUS &= ~TIMER_STATUS_CNT_ARR;
 
-		if(sweep++ > preset->sweep)
+		if(preset->sweep_cnt++ > preset->sweep)
 		{
-			sweep = 0;
+			preset->sweep_cnt = 0;
 			dpll_SetUpdFlg();
 		}
 	}

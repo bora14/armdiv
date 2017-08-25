@@ -86,7 +86,14 @@ int32_t dpll_Filt(dpll_t * dpll_)
 		phase = preset->shift + preset->att/2;
 	}
 
-	dpll.shift = (phase * (int32_t)DPLL_TIMER->ARR) / 360 ;
+	if(preset->search > AMP_SEARCH_ACU)
+		dpll.shift = (phase * (int32_t)DPLL_TIMER->ARR) / 360;
+	else
+	{
+		dpll.shift = 0;
+		dpll_->dAc[pos] >>= 4;
+		preset->search++;
+	}
 
 	dpll_->Acc = dpll_->dAc[pos] + dpll.shift;
 //	if(abs(dpll.Acc) > (DPLL_TIMER->ARR >> 3))
@@ -215,20 +222,26 @@ void dpll_ClearPhi()
  */
 void dpll_Update()
 {
+	static int32_t dt = 1;
+
 	if (preset->search == 0) // проверка наличия сигнала на входе
 	{
 		/* Свипирование */
-		dpll.T0 -= 1;
+		dpll.T0 += dt;
 		if(dpll.T0 > (CPU_MCK/15000))
-			dpll.T0 -= 2;
+			dpll.T0 += 2*dt;
 		if(dpll.T0 > (CPU_MCK/10000))
-			dpll.T0 -= 3;
+			dpll.T0 += 3*dt;
 
 		LED_Blink(LED1);
 
-		if(dpll.T0 < preset->Tmax) // Проверка границ интеравала свипирования
+		if(dpll.T0 > preset->Tmin) // Проверка границ интеравала свипирования
 		{
-			dpll.T0 = preset->Tmin;
+			dt = -1;
+		}
+		if(dpll.T0 < preset->Tmax)
+		{
+			dt = 1;
 		}
 
 		/*****************/
@@ -242,17 +255,6 @@ void dpll_Update()
 		dpll.intr[1] = 0;
 
 		dpll.ld = 0;
-	}
-	else if((preset->search > 0) && (preset->search < AMP_SEARCH_ACU))
-	{
-		preset->search++;
-
-		if(preset->search == AMP_SEARCH_ACU)
-		{
-			TIMER_ITConfig(MDR_TIMER1, TIMER_STATUS_CNT_ARR, DISABLE);
-			TIMER_ITConfig(MDR_TIMER1, TIMER_STATUS_CCR_CAP_CH3, ENABLE);
-		}
-		return;
 	}
 	else// if(preset->search == 50)
 	{

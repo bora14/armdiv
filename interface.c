@@ -134,6 +134,8 @@ void dataRcv()
 		else
 		{
 			preset->sweep = arg;
+			preset->sweep_cnt = 0;
+			preset->ave_cnt = 0;
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
 		}
 		break;
@@ -145,6 +147,8 @@ void dataRcv()
 		else
 		{
 			preset->ave_num = arg;
+			preset->sweep_cnt = 0;
+			preset->ave_cnt = 0;
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
 		}
 		break;

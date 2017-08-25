@@ -37,11 +37,8 @@ static Preset_t preset;
 
 int main()
 {
-	int32_t ave;
-
 	__disable_irq();
 
-	ave = 0;
 	/* Инициализация контроллера EEPROM */
 	memo_Configure(MEMO_TA_BANK_SEL);
 	/* Инициализация структуры PRESET_T */
@@ -108,7 +105,7 @@ int main()
 				preset.pack->termo += termo_Val();
 #endif
 
-			if(++ave >= preset.ave_num)
+			if(++preset.ave_cnt >= preset.ave_num)
 			{
 
 #ifdef AGC_RECU
@@ -119,7 +116,7 @@ int main()
 
 				setFlgDataTr();
 
-				ave = 0;
+				preset.ave_cnt = 0;
 
 				preset.t++;
 			}
@@ -196,11 +193,11 @@ int main()
 			preset.agc_start = 0;
 			agc_Amp();
 
-			if(((preset.amp >> AGC_RECU_D) < preset.search_fl) && (preset.search == AMP_SEARCH_ACU))
+			if(((preset.amp >> AGC_RECU_D) < preset.search_fl) && (preset.search > AMP_SEARCH_ACU))
 			{
 				// Переход в режим поиска
-				TIMER_ITConfig(MDR_TIMER1, TIMER_STATUS_CCR_CAP_CH3, DISABLE); // отключение захвата
-				TIMER_ITConfig(MDR_TIMER1, TIMER_STATUS_CNT_ARR, ENABLE); // включение сканирования
+//				TIMER_ITConfig(MDR_TIMER1, TIMER_STATUS_CCR_CAP_CH3, DISABLE); // отключение захвата
+//				TIMER_ITConfig(MDR_TIMER1, TIMER_STATUS_CNT_ARR, ENABLE); // включение сканирования
 				preset.search = 0;
 			}
 		}
@@ -316,6 +313,8 @@ int preset_Init()
 	preset.agc_start = 0;
 	preset.t = 0;
 	preset.amp = 0;
+	preset.sweep_cnt = 0;
+	preset.ave_cnt = 0;
 	preset.T[0] = 0;
 	preset.T[1] = 0;
 
@@ -347,7 +346,6 @@ int8_t search(Preset_t * preset)
 	static uint16_t i;
 	static int32_t period[AMP_SEARCH_POINTS_NUM];
 	static int32_t amp[AMP_SEARCH_POINTS_NUM];
-	int32_t DL, DE;
 
 	if((preset->search > 0) || (preset->es == 0))
 		return 1;
@@ -358,6 +356,7 @@ int8_t search(Preset_t * preset)
 	if(i++ < preset->search_len)
 		return 0;
 
+	int32_t DL, DE;
 	// Правая разность
 	DL = amp[(i + (preset->search_len/2 + 1)) % preset->search_len] - amp[i % preset->search_len];
 	// Левая разность

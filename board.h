@@ -28,7 +28,7 @@
 #define AGC_RECU_D					9
 #define AMP_SEARCH_POINTS_NUM 		500 ///< максимальная длина АЧХ для поиска
 #define AMP_SEARCH_TH				2000
-#define AMP_SEARCH_ACU				10 /// количество периодов для "втягивания" ФАПЧ
+#define AMP_SEARCH_ACU				100 /// количество периодов для "втягивания" ФАПЧ
 
 //#define FLL_ASSISTED	///< петля ФАПЧ с частотной поддержкой
 
@@ -81,10 +81,10 @@
 
 #define DPLL_VER 3
 
-#define MAX_SWEEP 	(30u)
+#define MAX_SWEEP 	(1000u)
 #define MIN_SWEEP 	(1u)
 #define MAX_AVE 	(1000)
-#define MIN_AVE 	(10)
+#define MIN_AVE 	(1)
 #define AVE_NUM 	(200)
 #define DPLL_F_MAX 	(20000u) 	///< Верхняя граница диапазона частот, Гц
 #define DPLL_F_MIN 	(5000u)		///< Нижняя граница диапазона частот, Гц
@@ -230,8 +230,8 @@ typedef enum
  */
 typedef struct
 {
-	int32_t sweep; 	///< Sweep speed
-	int32_t ave_num; ///< average number
+	int16_t sweep; 	///< Sweep speed
+	int16_t ave_num; ///< average number
 	int32_t Tmax; 	///< Max Period Natural Freq
 	int32_t Tmin; 	///< Min Period Natural Freq
 #if SCH_TYPE == 1
@@ -259,6 +259,8 @@ typedef struct
 	uint32_t amp; ///< Огибающая вхоного сигнала
 	int32_t T[2]; 		///< Current Period Natural Freq
 	uint8_t es; ///< вкл/выкл режима захвата. Полезно при измерении АЧХ датчика.
+	uint16_t sweep_cnt;
+	uint16_t ave_cnt;
 	dpll_t * dpll;
 	pack_t * pack;
 }__attribute__((packed)) Preset_t;
