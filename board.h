@@ -28,7 +28,7 @@
 #define AGC_RECU_D					9
 #define AMP_SEARCH_POINTS_NUM 		500 ///< максимальная длина АЧХ для поиска
 #define AMP_SEARCH_TH				2000
-#define AMP_SEARCH_ACU				100 /// количество периодов для "втягивания" ФАПЧ
+#define AMP_SEARCH_ACU				256 /// количество периодов для "втягивания" ФАПЧ
 
 //#define FLL_ASSISTED	///< петля ФАПЧ с частотной поддержкой
 
@@ -245,9 +245,8 @@ typedef struct
 	int16_t agc_th;
 #endif
 	int32_t search_th;  ///< порог для разности крайних точек АЧХ (DL, DE)
-	uint8_t search;		///< флаг "сигнал найден"
+	uint16_t search;		///< флаг "сигнал найден"
 	uint16_t search_len; ///< длина выборки, по которой строится АЧХ
-	uint16_t search_ds; ///< порог для разности (DE-DL)
 	uint16_t search_fl; ///< порог потери захвата
 	int32_t shift; ///< phase shift
 	edge_t edge; ///< Edge Capture (0 - Rising Edge; 1 - Falling Edge)

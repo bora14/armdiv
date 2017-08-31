@@ -91,8 +91,7 @@ int32_t dpll_Filt(dpll_t * dpll_)
 	else
 	{
 		dpll.shift = 0;
-		dpll_->dAc[pos] >>= 4;
-		preset->search++;
+//		dpll_->dAc[pos] >>= 4;
 	}
 
 	dpll_->Acc = dpll_->dAc[pos] + dpll.shift;
@@ -228,10 +227,10 @@ void dpll_Update()
 	{
 		/* Свипирование */
 		dpll.T0 += dt;
-		if(dpll.T0 > (CPU_MCK/15000))
-			dpll.T0 += 2*dt;
-		if(dpll.T0 > (CPU_MCK/10000))
-			dpll.T0 += 3*dt;
+//		if(dpll.T0 > (DPLL_T_MAX + (DPLL_T_MIN - DPLL_T_MAX)/3))
+//			dpll.T0 += 2*dt;
+//		if(dpll.T0 > (DPLL_T_MAX + 2*(DPLL_T_MIN - DPLL_T_MAX)/3))
+//			dpll.T0 += 4*dt;
 
 		LED_Blink(LED1);
 
@@ -256,8 +255,16 @@ void dpll_Update()
 
 		dpll.ld = 0;
 	}
-	else// if(preset->search == 50)
+	else if(preset->search < (AMP_SEARCH_ACU >> 1))
 	{
+		preset->search++;
+	}
+	else
+	{
+		if(preset->search < AMP_SEARCH_ACU+2)
+		{
+			preset->search++;
+		}
 		LED_On(LED1);
 #ifdef AGC_ON
 		if(preset->termo_src == Amplitude)
@@ -287,10 +294,23 @@ void dpll_Update()
 	}
 
 	/* Обновление параметров таймера на котором реализована ФАПЧ */
-	MDR_TIMER1->ARR = lroundf(dpll.T); // Обновление основания счета
+
+//	MDR_TIMER1->CCR1 = (MDR_TIMER1->ARR >> 1) + (MDR_TIMER1->ARR & 0x1); // Обновление регистра захвата CCR1
+//
+//	MDR_TIMER1->CCR2 = MDR_TIMER1->CCR1 - (preset->att * MDR_TIMER1->ARR)/360; // Обновление регистра захвата CCR2
+//	MDR_TIMER1->CCR21 = MDR_TIMER1->ARR - (preset->att * MDR_TIMER1->ARR)/360; // Обновление регистра захвата CCR21
+
+	dpll_SetT(lroundf(dpll.T));
+}
+
+int dpll_SetT(uint32_t T)
+{
+	MDR_TIMER1->ARR = T;
 
 	MDR_TIMER1->CCR1 = (MDR_TIMER1->ARR >> 1) + (MDR_TIMER1->ARR & 0x1); // Обновление регистра захвата CCR1
 
 	MDR_TIMER1->CCR2 = MDR_TIMER1->CCR1 - (preset->att * MDR_TIMER1->ARR)/360; // Обновление регистра захвата CCR2
 	MDR_TIMER1->CCR21 = MDR_TIMER1->ARR - (preset->att * MDR_TIMER1->ARR)/360; // Обновление регистра захвата CCR21
+
+	return 1;
 }

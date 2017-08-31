@@ -262,10 +262,6 @@ void dataRcv()
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
 		}
 		break;
-	case DS:
-		preset->search_ds = arg;
-		uart_mini_printf(USE_UART, CMD_SUCCESS);
-		break;
 	case FL:
 		preset->search_fl = arg;
 		uart_mini_printf(USE_UART, CMD_SUCCESS);

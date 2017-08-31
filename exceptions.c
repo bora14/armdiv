@@ -238,11 +238,8 @@ void     Timer1_IRQHandler(void)
 
 		preset->dpll->intr[0] = 1;
 
-		if(preset->search > 0)
-		{
-			dpll_SetUpdFlg();
-			preset->sweep_cnt = 0;
-		}
+		dpll_SetUpdFlg();
+//			preset->sweep_cnt = 0;
 
 		preset->dpll->cnt ^= 0x1;
 
@@ -253,7 +250,7 @@ void     Timer1_IRQHandler(void)
 
 		MDR_TIMER1->STATUS &= ~TIMER_STATUS_CNT_ARR;
 
-		if(preset->sweep_cnt++ > preset->sweep)
+		if(preset->sweep_cnt++ >= preset->sweep)
 		{
 			preset->sweep_cnt = 0;
 			dpll_SetUpdFlg();

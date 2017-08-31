@@ -64,5 +64,9 @@ void dpll_Update();
  * Петлевой фильтр.
  */
 float dpll_LoopFilter(float x, float *z, float *a, uint8_t order);
+/**
+ * Установка номинальной частоты
+ */
+int dpll_SetT(uint32_t T);
 
 #endif /* DPLL_H_ */
