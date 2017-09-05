@@ -239,7 +239,6 @@ void     Timer1_IRQHandler(void)
 		preset->dpll->intr[0] = 1;
 
 		dpll_SetUpdFlg();
-//			preset->sweep_cnt = 0;
 
 		preset->dpll->cnt ^= 0x1;
 

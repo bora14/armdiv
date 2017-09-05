@@ -1,5 +1,28 @@
-﻿/** \file
+﻿/** \file Алгоритм слежения за частотой
  *
+ * Схема слежения работает в четырех режимах:
+ * DPLL_MODE_ROUGH - грубый поиск (быстрый)
+ * DPLL_MODE_FINE - точный поиск (медленный)
+ * DPLL_MODE_DRAW - втягивание
+ * DPLL_MODE_TRACK - слежение
+ *
+ * Грубый поиск
+ * При включении питания или после потери захвата
+ * СЦВД начинает грубый (быстрый) поиск. Однако, после
+ * положительного результата управление передается
+ * на точный поиск.
+ *
+ * Точный поиск
+ * При точном поиске скорость сканирования снижается,
+ * что позволяет более точно определить максимум (алгоритм прежний).
+ * После чего, схема слежения начинает работать в режиме втягивания.
+ *
+ * Режим втягивания
+ * В этом режиме СЦВД не сканирует, а работает 256 тактов на частоте,
+ * определенной при поиске. После чего, схема переходит в режим слежения.
+ *
+ * Режим слежения
+ * В режиме слежения начинает работать фильтр петли ФАПЧ.
  *
  */
 
@@ -45,6 +68,8 @@ int32_t dpll_Init(Preset_t * preset_)
 	dpll.ld = 0;
 	dpll.shift = 0;
 	dpll.phase = 0;
+	dpll.search = 0;
+	dpll.mode = DPLL_MODE_ROUGH;
 
 	return 0;
 }
@@ -86,21 +111,15 @@ int32_t dpll_Filt(dpll_t * dpll_)
 		phase = preset->shift + preset->att/2;
 	}
 
-	if(preset->search > AMP_SEARCH_ACU)
+	if(dpll.search > AMP_SEARCH_ACU)
 		dpll.shift = (phase * (int32_t)DPLL_TIMER->ARR) / 360;
 	else
 	{
 		dpll.shift = 0;
-//		dpll_->dAc[pos] >>= 4;
 	}
 
 	dpll_->Acc = dpll_->dAc[pos] + dpll.shift;
-//	if(abs(dpll.Acc) > (DPLL_TIMER->ARR >> 3))
-//		dpll.Acc = (DPLL_TIMER->ARR >> 3) * sign(dpll.Acc);
-
-//	dpll_->Acc = 200*sign(dpll_->dAc[pos] + dpll.shift);
 	/* Вычисление выходного значения петлевого фильтра */
-//	dpll.Phi = dpll_LoopFilter(dpll_->Acc/10.0f, NULL, NULL, 2);
 	dpll.Phi = dpll_LoopFilter((3600*dpll_->Acc)/(int32_t)DPLL_TIMER->ARR, NULL, NULL, 2);
 
 //	dpll.Phi += ((dpll.Acc - (float)dpll.shift) / 20.0f);
@@ -145,10 +164,6 @@ float dpll_LoopFilter(float x, float *z, float *a, uint8_t order)
 		y = (acc + A[i])/2.0f;
 		A[i] = acc;
 	}
-
-//	y += ((x - dpll.shift)/2.0f);
-//	y += (x/8.0f - dpll.shift);
-//	y += (x/4.0f);
 
 	return y;
 }
@@ -223,14 +238,23 @@ void dpll_Update()
 {
 	static int32_t dt = 1;
 
-	if (preset->search == 0) // проверка наличия сигнала на входе
+	switch(dpll.mode)
 	{
+	case DPLL_MODE_ROUGH:
+
+		if(dpll_search(preset) > 0)
+		{
+			dpll.mode = DPLL_MODE_FINE;
+			dpll.search = 0;
+			break;
+		}
+
 		/* Свипирование */
 		dpll.T0 += dt;
-//		if(dpll.T0 > (DPLL_T_MAX + (DPLL_T_MIN - DPLL_T_MAX)/3))
-//			dpll.T0 += 2*dt;
-//		if(dpll.T0 > (DPLL_T_MAX + 2*(DPLL_T_MIN - DPLL_T_MAX)/3))
-//			dpll.T0 += 4*dt;
+		if(dpll.T0 > (DPLL_T_MAX + (DPLL_T_MIN - DPLL_T_MAX)/3))
+			dpll.T0 += 2*dt;
+		if(dpll.T0 > (DPLL_T_MAX + 2*(DPLL_T_MIN - DPLL_T_MAX)/3))
+			dpll.T0 += 4*dt;
 
 		LED_Blink(LED1);
 
@@ -254,27 +278,75 @@ void dpll_Update()
 		dpll.intr[1] = 0;
 
 		dpll.ld = 0;
-	}
-	else if(preset->search < (AMP_SEARCH_ACU >> 1))
-	{
-		preset->search++;
-	}
-	else
-	{
-		if(preset->search < AMP_SEARCH_ACU+2)
+
+		break;
+
+	case DPLL_MODE_FINE:
+
+		if(dpll_search(preset) > 0)
 		{
-			preset->search++;
+			dpll.mode = DPLL_MODE_DRAW;
+
+			TIMER_ITConfig(DPLL_TIMER, TIMER_STATUS_CNT_ARR, DISABLE);
+
+			TIMER_ITConfig(DPLL_TIMER, TIMER_STATUS_CCR_CAP_CH3, ENABLE);
+
+			break;
 		}
-		LED_On(LED1);
-#ifdef AGC_ON
-		if(preset->termo_src == Amplitude)
+
+		/* Свипирование */
+		dpll.T0 += dt;
+
+		LED_Blink(LED1);
+
+		if(dpll.T0 > preset->Tmin) // Проверка границ интеравала свипирования
 		{
-			agc();
+			dt = -1;
 		}
-#endif
+		if(dpll.T0 < preset->Tmax)
+		{
+			dt = 1;
+		}
+
+		/*****************/
+
+		dpll_ClearPhi(); // Обнуление выхода петлевого фильтра
+
+		dpll_ClearAcc(); // Обнуление фазового детектора
+
+		dpll_ClearFilt(); // Сброс значений петлевого фильтра
+
+		dpll.intr[1] = 0;
+
+		dpll.ld = 0;
+
+		break;
+
+	case DPLL_MODE_DRAW:
+
+		if(dpll.search < (AMP_SEARCH_ACU >> 1))
+		{
+			dpll.search++;
+		}
+		else
+		{
+			dpll.mode = DPLL_MODE_TRACK;
+		}
+
+		break;
+
+	case DPLL_MODE_TRACK:
+
+		if(dpll.search < AMP_SEARCH_ACU+2)
+		{
+			dpll.search++;
+		}
+
 		dpll_Filt(preset->dpll); // Вычисление выходного значения петлевого фильтра
 
 		dpll.ld = 1;
+
+		break;
 	}
 
 	dpll.T = dpll.Phi + (float)dpll.T0; // Вычисление текущего периода выходного сигнала
@@ -293,14 +365,8 @@ void dpll_Update()
 		dpll.T = preset->Tmin;
 	}
 
-	/* Обновление параметров таймера на котором реализована ФАПЧ */
-
-//	MDR_TIMER1->CCR1 = (MDR_TIMER1->ARR >> 1) + (MDR_TIMER1->ARR & 0x1); // Обновление регистра захвата CCR1
-//
-//	MDR_TIMER1->CCR2 = MDR_TIMER1->CCR1 - (preset->att * MDR_TIMER1->ARR)/360; // Обновление регистра захвата CCR2
-//	MDR_TIMER1->CCR21 = MDR_TIMER1->ARR - (preset->att * MDR_TIMER1->ARR)/360; // Обновление регистра захвата CCR21
-
 	dpll_SetT(lroundf(dpll.T));
+
 }
 
 int dpll_SetT(uint32_t T)
@@ -313,4 +379,82 @@ int dpll_SetT(uint32_t T)
 	MDR_TIMER1->CCR21 = MDR_TIMER1->ARR - (preset->att * MDR_TIMER1->ARR)/360; // Обновление регистра захвата CCR21
 
 	return 1;
+}
+
+/**
+ * \brief Поиск резонанса по амплитуде
+ *
+ * При запуске СЦВД начинается сканирование по частоте.
+ * Одновременно с этим измеряется огибающая выходного
+ * сигнала датчика. При сканировании в СЦВД запоминается preset->search_len выборок
+ * частоты и амплитуды. После чего вычисляется разность амплитуд
+ * между крайними и центральной точками выборки. Если разница
+ * превышает порог, то значение амплитуды и частоты центральной точки
+ * запоминаются. Далее, значение частоты сканирования повышается на единицу
+ * и процесс повторяется. Если 20 раз подряд произошло событие детектирования
+ * максимума, то из этих 20 значений выбирается частота, соответствующая
+ * максимальной амплитуде и подставляется в схему слежения. После чего, через 256
+ * тактов (что бы переходный процесс в датчике закончился) начинает
+ * работать схема слежения.
+ *
+ */
+int16_t dpll_search(Preset_t * preset)
+{
+	static uint16_t i, i1;
+	static int32_t period[AMP_SEARCH_POINTS_NUM];
+	static int32_t amp[AMP_SEARCH_POINTS_NUM];
+	static int32_t local_max[20], local_idx[20];
+
+	if((preset->dpll->search > 0) || (preset->es == 0))
+		return preset->dpll->search;
+
+	amp[i % preset->search_len] = preset->amp >> AGC_RECU_D;
+	period[i % preset->search_len] = preset->dpll->T0;
+
+	if(i++ < preset->search_len)
+		return preset->dpll->search;
+
+	int32_t DL, DE, P;
+	P = amp[(i + (preset->search_len/2 + 1)) % preset->search_len];
+	// Правая разность
+	DL = P - amp[i % preset->search_len];
+	// Левая разность
+	DE = P - amp[(i + 1) % preset->search_len];
+
+	if((DL > preset->search_th) && (DE > preset->search_th))
+	{
+		local_max[i1] = P;
+		local_idx[i1] = (i + (preset->search_len/2 + 1)) % preset->search_len;
+		i1++;
+	}
+	else
+	{
+		i1 = 0;
+		return preset->dpll->search;
+	}
+
+	if(i1 > 19)
+	{
+		int idx = 0, i2, max_prev;
+		max_prev = local_max[0];
+		for(i2 = 1; i2 < 20; i2++)
+		{
+			if(local_max[i2] > max_prev)
+			{
+				max_prev = local_max[i2];
+				idx = i2;
+			}
+		}
+		preset->dpll->search = 1;
+
+		preset->dpll->T0 = period[local_idx[idx]];
+
+		dpll_SetT(period[local_idx[idx]]);
+
+		i1 = 0; i = 0;
+
+		return preset->dpll->search;
+	}
+
+	return preset->dpll->search;
 }

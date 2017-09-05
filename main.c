@@ -35,6 +35,10 @@ static int flgDataTr = 0;
  */
 static Preset_t preset;
 
+static int preset_Init();
+
+static int8_t search(Preset_t * preset);
+
 int main()
 {
 	__disable_irq();
@@ -88,9 +92,6 @@ int main()
 	{
 		if(dpll_UpdFlg())
 		{
-
-			search(&preset);
-
 			dpll_ClearUpdFlg();
 
 			dpll_Update();
@@ -194,12 +195,13 @@ int main()
 			preset.agc_start = 0;
 			agc_Amp();
 
-			if(((preset.amp >> AGC_RECU_D) < preset.search_fl) && (preset.search >= AMP_SEARCH_ACU))
+			if(((preset.amp >> AGC_RECU_D) < preset.search_fl) && (preset.dpll->search >= AMP_SEARCH_ACU))
 			{
 				// Переход в режим поиска
 				TIMER_ITConfig(DPLL_TIMER, TIMER_STATUS_CCR_CAP_CH3, DISABLE); // отключение захвата
 				TIMER_ITConfig(DPLL_TIMER, TIMER_STATUS_CNT_ARR, ENABLE); // включение сканирования
-				preset.search = 0;
+				preset.dpll->mode = DPLL_MODE_ROUGH;
+				preset.dpll->search = 0;
 			}
 		}
 
@@ -293,8 +295,7 @@ int preset_Init()
 		preset.Tmax = DPLL_T_MAX;
 		preset.Tmin = DPLL_T_MIN;
 		preset.filt_order = LOOP_FILTER_ORDER;
-		preset.edge = Falling_Edge;
-		preset.termo_src = Amplitude;
+		preset.edge = Rising_Edge;
 		preset.shift = 0;
 		preset.att0 = 0;
 		preset.att = preset.att0;
@@ -308,8 +309,8 @@ int preset_Init()
 		preset.search_fl = 1000;
 	}
 
+	preset.termo_src = Amplitude;
 	preset.es = 1;
-	preset.search = 0;
 	preset.agc_start = 0;
 	preset.t = 0;
 	preset.amp = 0;
@@ -337,71 +338,4 @@ void preset_Save()
 	 * Записть ключа
 	 */
 	memo_WriteByte(MEMO_CONF_BASE_ADR + MEMO_CONF_KEY_REG, MEMO_CONF_BANK_SEL, MEMO_CONF_KEY);
-}
-/**
- * Поиск резонанса по амплитуде
- */
-int8_t search(Preset_t * preset)
-{
-	static uint16_t i, i1;
-	static int32_t period[AMP_SEARCH_POINTS_NUM];
-	static int32_t amp[AMP_SEARCH_POINTS_NUM];
-	static int32_t local_max[20], local_idx[20];
-
-	if((preset->search > 0) || (preset->es == 0))
-		return 0;
-
-	amp[i % preset->search_len] = preset->amp >> AGC_RECU_D;
-	period[i % preset->search_len] = preset->dpll->T0;
-
-	if(i++ < preset->search_len)
-		return 0;
-
-	int32_t DL, DE, P;
-	P = amp[(i + (preset->search_len/2 + 1)) % preset->search_len];
-	// Правая разность
-	DL = P - amp[i % preset->search_len];
-	// Левая разность
-	DE = P - amp[(i + 1) % preset->search_len];
-
-	if((DL > preset->search_th) && (DE > preset->search_th))
-	{
-		local_max[i1] = P;
-		local_idx[i1] = (i + (preset->search_len/2 + 1)) % preset->search_len;
-		i1++;
-	}
-	else
-	{
-		i1 = 0;
-		return 0;
-	}
-
-	if(i1 > 19)
-	{
-		TIMER_ITConfig(DPLL_TIMER, TIMER_STATUS_CNT_ARR, DISABLE);
-		TIMER_ITConfig(DPLL_TIMER, TIMER_STATUS_CCR_CAP_CH3, ENABLE);
-
-		int idx = 0, i2, max_prev;
-		max_prev = local_max[0];
-		for(i2 = 1; i2 < 20; i2++)
-		{
-			if(local_max[i2] > max_prev)
-			{
-				max_prev = local_max[i2];
-				idx = i2;
-			}
-		}
-		preset->search = 1;
-
-		preset->dpll->T0 = period[local_idx[idx]];
-//		uart_mini_printf(USE_UART,"\r\n\t idx = %ld \r\n", idx);
-
-		dpll_SetT(period[local_idx[idx]]);
-
-		i1 = 0; i = 0;
-
-		return idx;
-	}
-
-	return 0;
 }

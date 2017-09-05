@@ -165,6 +165,8 @@ typedef struct
 	int32_t phase2;	///< Сдвиг фаз в 2-ой точке интерполяционной прямой, в град
 	int32_t period2;///< Период резонансной частоты во 2-ой точке интерполяционной прямой, в тактах
 	int8_t interp_valid_ta;///< Флаг наличия тарировочных коэффициентов
+	uint16_t search;		///< флаг "сигнал найден"
+	int8_t mode;	///< режим работы: 0 - грубый поиск, 1 - точный поиск, 2 - втягивание, 3 - слежение
 }dpll_t;
 
 
@@ -245,7 +247,6 @@ typedef struct
 	int16_t agc_th;
 #endif
 	int32_t search_th;  ///< порог для разности крайних точек АЧХ (DL, DE)
-	uint16_t search;		///< флаг "сигнал найден"
 	uint16_t search_len; ///< длина выборки, по которой строится АЧХ
 	uint16_t search_fl; ///< порог потери захвата
 	int32_t shift; ///< phase shift
@@ -281,10 +282,6 @@ void AMP_Ctrl(int16_t period);
 
 void cpu_boot();
 
-int preset_Init();
-
 void preset_Save();
-
-int8_t search(Preset_t * preset);
 
 #endif /* BOARD_H_ */
