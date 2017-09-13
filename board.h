@@ -16,17 +16,11 @@
 //#define DMA	///< Включение ПДП режима UART
 #define XMODEM
 #define POWER_SAVE_MODE_ON ///< Включение режима пониженного энергопотребления
-/**
- * Тип схемы для управления амплитудой входного сигнала.
- * 1 - упралвение через ШИМ;
- * 2 - управление по средствам сдвига фаз.
- */
-#define SCH_TYPE	(2)
 
 //#define AGC_ON			///< включение АРУ
 #define AGC_RECU		///< Рекурсивная оценка значения АЦП
 #define AGC_RECU_D					9
-#define AMP_SEARCH_POINTS_NUM 		500 ///< максимальная длина АЧХ для поиска
+#define AMP_SEARCH_POINTS_NUM 		512 ///< максимальная длина АЧХ для поиска
 #define AMP_SEARCH_TH				2000
 #define AMP_SEARCH_ACU				256 /// количество периодов для "втягивания" ФАПЧ
 
@@ -52,12 +46,7 @@
 #define USE_UART 	MDR_UART2
 #define UART_WORK_BAUD	(115200u)
 #define UART_TA_BAUD	(19200u)
-#if SCH_TYPE == 1
-#define AMP_Timer	MDR_TIMER3
-#endif
-#if SCH_TYPE == 2
 #define AMP_Timer	MDR_TIMER1
-#endif
 #define DPLL_TIMER				MDR_TIMER1
 #define DPLL_TIMER_IRQ			Timer1_IRQn
 #define DPLL_TIMER_Prescaler	TIMER1_Prescaler
@@ -66,18 +55,10 @@
 #define TIMER2_Prescaler (1000u)
 #define TIMER3_Prescaler (0u)
 
-#if SCH_TYPE == 1
-#define LED_PORT 	(MDR_PORTB)
-#define LED_PINS	(PORT_Pin_0)
-#define LED1		(PORT_Pin_0)
-#endif
-
-#if SCH_TYPE == 2
 #define LED_PORT 	(MDR_PORTB)
 #define LED_PINS	(PORT_Pin_1)
 #define LED1		(PORT_Pin_1)
 #define LED2		(PORT_Pin_3)
-#endif
 
 #define DPLL_VER 3
 
@@ -92,12 +73,6 @@
 #define Tq_ms		(Tq * 1000.0f)
 #define Tq_us		(Tq * 1000000.0f)
 
-#if SCH_TYPE == 1
-#define PWR_CTRL_PERIOD  (600u)
-#define PWR_CTRL_PERIOD_MAX (2 * PWR_CTRL_PERIOD - 5u)
-#define PWR_CTRL_PERIOD_MIN (5u)
-#elif SCH_TYPE == 2
-
 #define DPLL_T_MAX 		(CPU_MCK/((DPLL_TIMER_Prescaler + 1u) * DPLL_F_MAX))
 #define DPLL_T_MIN 		(CPU_MCK/((DPLL_TIMER_Prescaler + 1u) * DPLL_F_MIN))
 
@@ -105,8 +80,6 @@
 #ifdef AGC_ON
 #	define AGC_TH	(1700)
 #endif
-#endif
-
 #define AGC_FREQ	(DPLL_T_MAX >> 1)
 
 /**
@@ -115,6 +88,8 @@
 #define LOOP_FILTER_ORDER	(3u)
 
 #define sign(x) ((x) > 0) ? 1 : (((x) < 0) ? -1 : 0)
+#define MIN(a,b) ((a) > (b)) ? (b) : (a)
+#define MAX(a,b) ((a) > (b)) ? (a) : (b)
 
 #define SUCCESS		(1u)
 #define FAILURE		(0u)
@@ -216,7 +191,8 @@ typedef enum
 	WORK = 0, 	///< Нормальная работа
 	TA = 1,		///< Тарировка
 	UPLOAD = 2,	///< Загрузка данных
-	DOWNLOAD = 3	///< Выгрузка данных
+	DOWNLOAD = 3,	///< Выгрузка данных
+	AUTOSET = 5		///< Режим автонастройки
 }opmode_t;
 /** @} */
 
@@ -236,13 +212,9 @@ typedef struct
 	int16_t ave_num; ///< average number
 	int32_t Tmax; 	///< Max Period Natural Freq
 	int32_t Tmin; 	///< Min Period Natural Freq
-#if SCH_TYPE == 1
-	int32_t duty_cycle; ///< PWR
-#elif SCH_TYPE == 2
 	int16_t att; ///< PWR
 	int16_t att0; ///< Амплитуда возбуждения в отсутствие захвата
 	uint8_t agc_on; ///< Включение/Выключение АРУ
-#endif
 #ifdef AGC_ON
 	int16_t agc_th;
 #endif
@@ -274,11 +246,7 @@ void clearFlgDataTr();
 void LED_On(uint32_t led);
 void LED_Off(uint32_t led);
 void LED_Blink(uint32_t led);
-#if SCH_TYPE == 1
-void AMP_Ctrl(uint16_t period);
-#elif SCH_TYPE == 2
 void AMP_Ctrl(int16_t period);
-#endif
 
 void cpu_boot();
 

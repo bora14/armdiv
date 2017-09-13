@@ -32,7 +32,6 @@ void Port_Configure()
 
 	PORT_Init(MDR_PORTA, &Port);
 
-#if SCH_TYPE == 2
 	// OUT
 	Port.PORT_Pin = PORT_Pin_3;
 	Port.PORT_OE = PORT_OE_OUT;
@@ -41,7 +40,6 @@ void Port_Configure()
 	Port.PORT_SPEED = PORT_SPEED_MAXFAST;
 
 	PORT_Init(MDR_PORTA, &Port);
-#endif
 
 	// IN
 	Port.PORT_Pin = PORT_Pin_5;

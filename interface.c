@@ -102,19 +102,6 @@ void dataRcv()
 		}
 		break;
 	case AM:
-#if SCH_TYPE == 1
-		if((arg < PWR_CTRL_PERIOD_MIN) || (arg > PWR_CTRL_PERIOD_MAX))
-		{
-			uart_mini_printf(USE_UART, CMD_OUT_OF_RANGE);
-		}
-		else
-		{
-			preset->duty_cycle = arg;
-			AMP_Ctrl(arg);
-			uart_mini_printf(USE_UART, CMD_SUCCESS);
-		}
-#endif
-#if SCH_TYPE == 2
 		if(arg > 179) /* �� ����� 179 ��������*/
 		{
 			uart_mini_printf(USE_UART, CMD_OUT_OF_RANGE);
@@ -124,7 +111,6 @@ void dataRcv()
 			AMP_Ctrl((int16_t)arg);
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
 		}
-#endif
 		break;
 	case SW:
 		if((arg < MIN_SWEEP) || (arg > MAX_SWEEP))
@@ -218,6 +204,10 @@ void dataRcv()
 		else if(arg == DOWNLOAD)
 		{
 			ta_Download(preset->mode);
+		}
+		else if(arg == AUTOSET)
+		{
+			dpll_Reset();
 		}
 		break;
 	case ST:

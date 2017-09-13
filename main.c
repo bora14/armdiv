@@ -37,8 +37,6 @@ static Preset_t preset;
 
 static int preset_Init();
 
-static int8_t search(Preset_t * preset);
-
 int main()
 {
 	__disable_irq();
@@ -113,6 +111,8 @@ int main()
 				preset.pack->termo = preset.amp;
 #endif
 				preset.pack->T += preset.ave_num;
+
+				preset.pack->P = preset.dpll->mode;
 
 				preset.T[preset.t & 0x01] = preset.pack->T;
 
@@ -195,12 +195,12 @@ int main()
 			preset.agc_start = 0;
 			agc_Amp();
 
-			if(((preset.amp >> AGC_RECU_D) < preset.search_fl) && (preset.dpll->search >= AMP_SEARCH_ACU))
+			if(((preset.amp >> AGC_RECU_D) < preset.search_fl) && (preset.dpll->mode == DPLL_MODE_TRACK))
 			{
 				// Переход в режим поиска
 				TIMER_ITConfig(DPLL_TIMER, TIMER_STATUS_CCR_CAP_CH3, DISABLE); // отключение захвата
 				TIMER_ITConfig(DPLL_TIMER, TIMER_STATUS_CNT_ARR, ENABLE); // включение сканирования
-				preset.dpll->mode = DPLL_MODE_ROUGH;
+				preset.dpll->mode = DPLL_MODE_FAIL;
 				preset.dpll->search = 0;
 			}
 		}
@@ -242,18 +242,10 @@ void LED_Blink(uint32_t led)
 	LED_PORT->RXTX ^= led;
 }
 
-#if SCH_TYPE == 1
-void AMP_Ctrl(uint16_t period)
-{
-	AMP_Timer->CCR3 = period;
-}
-#endif
-#if SCH_TYPE == 2
 void AMP_Ctrl(int16_t amp)
 {
 	preset.att = amp;
 }
-#endif
 
 /**
  * Перевод МК в режим загрузчика UART2.
@@ -304,11 +296,12 @@ int preset_Init()
 	#endif
 		preset.agc_on = 1;
 		preset.mode = WORK;
-		preset.search_th = 350;
+		preset.search_th = 100;
 		preset.search_len = AMP_SEARCH_POINTS_NUM;
 		preset.search_fl = 1000;
 	}
 
+	preset.sot = 0xFEFE;
 	preset.termo_src = Amplitude;
 	preset.es = 1;
 	preset.agc_start = 0;
