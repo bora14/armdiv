@@ -194,7 +194,7 @@ typedef struct
 #ifdef INTERFACE_TYPE_MATLAB
 typedef struct
 {
-	uint16_t sot;
+	uint32_t sot;
 	uint32_t T;
 	uint32_t P;
 	uint32_t termo;
@@ -232,19 +232,16 @@ typedef enum
  */
 typedef struct
 {
+	int32_t sot;		///< маркер = 0xFEFE
 	int32_t sweep; 		///< Sweep speed
 	int32_t ave_num; 	///< average number
 	int32_t Tmax; 		///< Max Period Natural Freq
 	int32_t Tmin; 		///< Min Period Natural Freq
 	int8_t sens_num;	///< Номер градуированного датчика
 	int32_t freq;		///< Истинная частота работы МК
-#if SCH_TYPE == 1
-	int32_t duty_cycle; ///< PWR
-#elif SCH_TYPE == 2
 	int16_t att; 		///< Амлитуда возбуждения
 	int16_t att0; 		///< Амплитуда возбуждения в отсутствие захвата
 	uint8_t agc_on; 	///< Включение/Выключение АРУ
-#endif
 #ifdef AGC_ON
 	int16_t agc_th;
 #endif

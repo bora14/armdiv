@@ -18,7 +18,7 @@
 #include "agc.h"
 
 #if defined(INTERFACE_TYPE_MATLAB)
-static pack_t pack = {SOT, 0, 0, EOT};
+static pack_t pack;
 #endif
 #if defined(INTERFACE_TYPE_APP)
 static pack_t pack = {SOT, 0, 0, 0, 0.0f, 0, 0};
@@ -30,6 +30,12 @@ static Preset_t * preset;
 void interface_Init(Preset_t * _preset)
 {
 	preset = _preset;
+
+	pack.sot = SOT;
+	pack.P = 0;
+	pack.T = 0;
+	pack.termo = 0;
+	pack.eot = EOT;
 
 	preset->pack = &pack;
 
@@ -68,7 +74,7 @@ pack_t * get_Pack()
 
 void dataRcv()
 {
-	int32_t arg;
+	int32_t arg, ok = 0;
 
 	arg = atol((char *)&uart_cmd.data[UART_MARK_LEN]);
 
@@ -97,6 +103,7 @@ void dataRcv()
 		uart_mini_printf(USE_UART, "\r\n edge %d \r\n", preset->edge);
 		uart_mini_printf(USE_UART, "\r\n mode %d \r\n", preset->mode);
 		uart_mini_printf(USE_UART, "\r\n termo_src %d \r\n", preset->termo_src);
+		ok = 1;
 		break;
 #endif
 	case UP:
@@ -108,6 +115,7 @@ void dataRcv()
 		{
 			preset->Tmax = CPU_MCK/((TIMER1_Prescaler + 1u) * arg);
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
+			ok = 1;
 		}
 		break;
 	case DN:
@@ -119,6 +127,7 @@ void dataRcv()
 		{
 			preset->Tmin = CPU_MCK/((TIMER1_Prescaler + 1u) * arg);
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
+			ok = 1;
 		}
 		break;
 	case AM:
@@ -132,6 +141,7 @@ void dataRcv()
 			preset->duty_cycle = arg;
 			AMP_Ctrl(arg);
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
+			ok = 1;
 		}
 #endif
 #if SCH_TYPE == 2
@@ -143,6 +153,7 @@ void dataRcv()
 		{
 			AMP_Ctrl((int16_t)arg);
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
+			ok = 1;
 		}
 #endif
 		break;
@@ -155,6 +166,7 @@ void dataRcv()
 		{
 			preset->sweep = arg;
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
+			ok = 1;
 		}
 		break;
 	case AV:
@@ -166,6 +178,7 @@ void dataRcv()
 		{
 			preset->ave_num = arg;
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
+			ok = 1;
 		}
 		break;
 	case BT:
@@ -181,6 +194,7 @@ void dataRcv()
 		{
 			preset->shift = arg;
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
+			ok = 1;
 		}
 		break;
 	case TS:
@@ -196,6 +210,7 @@ void dataRcv()
 				preset->agc_on = 1;
 
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
+			ok = 1;
 		}
 		else
 		{
@@ -214,9 +229,11 @@ void dataRcv()
 			Timer1_Configure(preset);
 
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
+			ok = 1;
 		}
 		break;
 	case MO:
+		ok = 1;
 		if(arg == WORK)
 		{
 			preset->mode = WORK;
@@ -235,14 +252,18 @@ void dataRcv()
 		{
 			ta_Download(preset->mode);
 		}
-		if(arg == PRESSURE)
+		else if(arg == PRESSURE)
 		{
 			preset->mode = PRESSURE;
 			interface_Init(preset);
 		}
-		if(arg == STOP)
+		else if(arg == STOP)
 		{
 			preset->mode = STOP;
+		}
+		else
+		{
+			ok = 0;
 		}
 		break;
 #ifdef AGC_ON
@@ -278,15 +299,27 @@ void dataRcv()
 			preset->sens_num = arg;
 			uart_mini_printf(USE_UART,"\t %s \t", ta_SensID(preset->sens_num));
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
+			ok = 1;
 		}
 		break;
 	case FR:
 		preset->freq = arg;
 		uart_mini_printf(USE_UART, CMD_SUCCESS);
+		ok = 1;
 		break;
 	default:
 		uart_mini_printf(USE_UART, CMD_UNKNOWN);
 		break;
+	}
+
+	if(ok == 1)
+	{
+		int i;
+		uint8_t * p = (uint8_t *)preset;
+		int32_t begin = &preset->sot;
+		int32_t end = &preset->termo_src + sizeof(preset->termo_src);
+		for(i = 0; i < end - begin; i++)
+			UART_PutChar(USE_UART, *p++);
 	}
 }
 

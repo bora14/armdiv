@@ -88,7 +88,6 @@ int32_t dpll_Filt(dpll_t * dpll_)
 
 	dpll.shift = (phase * (int32_t)DPLL_TIMER->ARR) / 360 ;
 
-	preset->pack->P = dpll.dAc[pos];
 	dpll_->Acc = dpll_->dAc[pos] + dpll.shift;
 //	if(abs(dpll.Acc) > (DPLL_TIMER->ARR >> 3))
 //		dpll.Acc = (DPLL_TIMER->ARR >> 3) * sign(dpll.Acc);

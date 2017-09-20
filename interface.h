@@ -12,7 +12,7 @@
 #include "uart.h"
 
 #ifdef INTERFACE_TYPE_MATLAB
-#	define SOT					(0xFFFF) // Start of transmission
+#	define SOT					(0x01020304) // Start of transmission
 #	define EOT 					(0x00) // End of transmission
 #endif
 #ifdef INTERFACE_TYPE_APP

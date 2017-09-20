@@ -29,7 +29,7 @@
 #ifndef UART_FIFO_TR
 #define UART_PutChar(uart, ch)	{while(UART_GetFlagStatus(uart, UART_FLAG_BUSY) == SET); UART_SendData(uart,ch);}
 #else
-#define UART_PutChar(uart, ch)	{UART_SendData(uart,ch);}
+#define UART_PutChar(uart, ch)	{while(UART_GetFlagStatus(uart, UART_FLAG_TXFF) == SET); UART_SendData((uart),(ch));}
 #endif
 
 #ifdef __cplusplus

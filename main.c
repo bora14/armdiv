@@ -293,6 +293,8 @@ int preset_Init()
 		preset.mode = WORK;
 	}
 
+	preset.sot = 0x10203040;
+
 	return ret;
 }
 
