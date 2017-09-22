@@ -229,6 +229,7 @@ typedef struct
 	uint8_t t;		///< Время работы, в тактах
 	uint8_t agc_start; ///< Одиночный запуск АРУ
 	uint32_t amp; ///< Огибающая вхоного сигнала
+	uint32_t termo; ///< Напряжение термодатчика
 	int32_t T[2]; 		///< Current Period Natural Freq
 	uint8_t es; ///< вкл/выкл режима захвата. Полезно при измерении АЧХ датчика.
 	uint16_t sweep_cnt;

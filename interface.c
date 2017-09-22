@@ -158,13 +158,6 @@ void dataRcv()
 		{
 			preset->termo_src = arg;
 
-			preset->agc_on = 0;
-
-			ADC_SetChan(preset->termo_src);
-
-			if(arg == Amplitude)
-				preset->agc_on = 1;
-
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
 		}
 		else

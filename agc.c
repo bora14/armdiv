@@ -12,8 +12,11 @@
 
 #include "agc.h"
 #include "adc.h"
+#include "termo.h"
 #include <stdlib.h>
 
+
+static int32_t agc(int32_t x, uint32_t * acc, uint32_t * rem);
 
 static Preset_t * preset;
 
@@ -23,21 +26,6 @@ static Preset_t * preset;
 void agc_Init(Preset_t * _preset)
 {
 	preset = _preset;
-}
-
-/**
- * АРУ
- */
-void agc()
-{
-#ifdef AGC_ON
-	int16_t sup;
-
-	sup = (int16_t)(preset->amp >> AGC_RECU_D) - preset->agc_th;
-
-	if(abs(sup) > 20)
-		preset->att = ((preset->att << AGC_RECU_D) + sup) >> AGC_RECU_D;
-#endif
 }
 
 /**
@@ -61,28 +49,58 @@ int32_t agc_Att0()
 
 /**
  *  \brief Детектор огибающей входного сигнала
- *  Данная функция используется не только для оценки
- *  амплитуды сигнала на выходе датчика, но и для
- *  усреднения значений напряжения внутренненго или
- *  внешнего термодиодов.
+ *
+ *  Данная функция используется для оценки
+ *  амплитуды сигнала на выходе датчика.
  */
-int32_t agc_Amp()
+uint32_t agc_Amp()
 {
-	static int32_t rem;
-	int32_t amp = 0, AMP;
+	static uint32_t rem;
+	int32_t amp = 0;
+
+	ADC_SetChannel(AGC_CHAN);
 
 	ADC_Read((uint16_t * )&amp);
 
-	if(preset->termo_src == Amplitude)
-	{
-		amp = abs(ADC_MEAN - amp);
-	}
+	amp = abs(ADC_MEAN - amp);
 
-	AMP = ((1 << AGC_RECU_D) - 1) * preset->amp + rem;
-
-	preset->amp = (AMP >> AGC_RECU_D) + amp;
-
-	rem = AMP & 0x1ff;
+	agc(amp, &preset->amp, &rem);
 
 	return preset->amp;
+}
+
+/**
+ *  \brief Оценка напяжения на выходе термодатчика
+ *
+ *  Данная функция используется для оценки
+ *  напряжения внутренненго или внешнего термодиодов.
+ */
+uint32_t agc_Termo()
+{
+	static uint32_t rem;
+	int32_t termo = 0;
+
+	termo_SetChan(preset->termo_src);
+
+	ADC_Read((uint16_t * )&termo);
+
+	agc(termo, &preset->termo, &rem);
+
+	return preset->termo;
+}
+
+/**
+ * \brief Moving Average
+ */
+int32_t agc(int32_t x, uint32_t * acc, uint32_t * rem)
+{
+	int32_t AMP;
+
+	AMP = ((1 << AGC_RECU_D) - 1) * (*acc) + (*rem);
+
+	(*acc) = (AMP >> AGC_RECU_D) + x;
+
+	(*rem) = AMP & 0x1ff;
+
+	return (*acc);
 }

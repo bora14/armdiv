@@ -18,11 +18,6 @@
 void termo_Init(Preset_t * preset);
 
 /**
- * Оцифровка напряжения на выходе датчика температуры.
- */
-uint16_t termo_Val();
-
-/**
  * Выбор используемого датчика температуры.
  */
 void termo_SetChan(uint8_t chan);

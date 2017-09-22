@@ -39,8 +39,6 @@ typedef enum
 
 void ADC_Configure();
 
-void ADC_SetChan(adcChannel_t chan);
-
 void ADC_Read(uint16_t * t);
 
 #endif /* ADC_H_ */

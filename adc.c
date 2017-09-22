@@ -31,7 +31,7 @@ void ADC_Configure()
 	/* ADC1 Configuration */
 	ADCx_StructInit (&sADCx);
 	sADCx.ADC_ClockSource      = ADC_CLOCK_SOURCE_CPU;
-	sADCx.ADC_SamplingMode     = ADC_SAMPLING_MODE_CICLIC_CONV;
+	sADCx.ADC_SamplingMode     = ADC_SAMPLING_MODE_SINGLE_CONV;//ADC_SAMPLING_MODE_CICLIC_CONV;
 	sADCx.ADC_ChannelSwitching = ADC_CH_SWITCHING_Disable;
 	sADCx.ADC_ChannelNumber    = TERMO_EXT_CHAN;
 	sADCx.ADC_Channels         = TERMO_EXT_CHAN_MSK | ADC_CH_TEMP_SENSOR_MSK | AGC_CHAN_MSK;
@@ -49,32 +49,14 @@ void ADC_Configure()
 }
 
 /**
- * Установка канала АЦП для преобразования.
- */
-void ADC_SetChan(adcChannel_t chan)
-{
-	if(chan == Termo_Ext)
-	{
-		ADC_SetChannel(TERMO_EXT_CHAN);
-	}
-	else if(chan == Termo_Int)
-	{
-		ADC_SetChannel(TERMO_INT_CHAN);
-	}
-	else if(chan == Amplitude)
-	{
-		ADC_SetChannel(AGC_CHAN);
-	}
-}
-
-
-/**
  * Оцифровка напряжения на входе АЦП.
  * Переменная t должна быть 16-разрядной, так как старшие 16 разрядов
  * 32-разрядного значения, возвращаемого функцией ADC_GetResult, содержат мусор.
  */
 void ADC_Read(uint16_t * t)
 {
+	ADC_Start();
+
 	while(ADC_GetFlagStatus(ADC1_FLAG_END_OF_CONVERSION) == RESET);
 
 	*t = ADC_GetResult();

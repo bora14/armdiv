@@ -95,15 +95,17 @@ int32_t dpll_Init(Preset_t * preset_)
 	dpll.search = 0;
 	dpll.mode = DPLL_MODE_ROUGH;
 
+	dpll_Reset();
+
 	return 0;
 }
 
 void dpll_Reset()
 {
 	if(preset->mode == AUTOSET)
-		dpll_op = dpll_autoset;
+		dpll_op = &dpll_autoset;
 	else
-		dpll_op = dpll_work;
+		dpll_op = &dpll_work;
 
 	reset_search();
 }
@@ -259,7 +261,7 @@ void dpll_clearPhi()
 
 void dpll_Update()
 {
-	dpll_op();
+	(*dpll_op)();
 }
 
 /**
@@ -440,7 +442,7 @@ void dpll_autoset()
 	 * */
 	static int32_t dt = 1;
 	static int32_t Tmin_fine, Tmax_fine, T0;
-	static int16_t search_len, fine_iter;
+	static int16_t search_len, iter;
 
 	switch(dpll.mode)
 	{
@@ -455,7 +457,7 @@ void dpll_autoset()
 			Tmax_fine = MAX(DPLL_T_MAX, T0 - (AMP_SEARCH_POINTS_NUM >> 2));
 			search_len = Tmin_fine - Tmax_fine;
 			dpll.T0 = Tmax_fine;
-			fine_iter = 0;
+			iter = 0;
 			reset_search();
 			break;
 		}
@@ -490,6 +492,8 @@ void dpll_autoset()
 
 			dpll.mode = DPLL_MODE_DRAW;
 
+			iter = 0;
+
 			break;
 		}
 
@@ -506,10 +510,10 @@ void dpll_autoset()
 		{
 			dt = 1;
 
-			fine_iter++;
+			iter++;
 		}
 
-		if(fine_iter > 5)
+		if(iter > 5)
 		{
 			dpll.mode = DPLL_MODE_ROUGH;
 			reset_search();

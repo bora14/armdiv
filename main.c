@@ -65,7 +65,6 @@ int main()
 
 	uart_mini_printf(USE_UART, "\n\r ADC Configure......");
 	ADC_Configure(&preset);
-	ADC_SetChan(preset.termo_src);
 	uart_mini_printf(USE_UART, "OK!\n\r");
 
 	termo_Init(&preset);
@@ -93,7 +92,8 @@ int main()
 			dpll_ClearUpdFlg();
 
 			dpll_Update();
-#ifdef INTERFACE_TYPE_MATLAB
+
+			agc_Termo();
 
 			preset.pack->T += MDR_TIMER1->ARR;
 
@@ -106,13 +106,13 @@ int main()
 
 			if(++preset.ave_cnt >= preset.ave_num)
 			{
-
 #ifdef AGC_RECU
-				preset.pack->termo = preset.amp;
+				if(preset.termo_src == Amplitude)
+					preset.pack->termo = preset.amp;
+				else
+					preset.pack->termo = preset.termo;
 #endif
 				preset.pack->T += preset.ave_num;
-
-				preset.pack->P = preset.dpll->mode;
 
 				preset.T[preset.t & 0x01] = preset.pack->T;
 
@@ -122,49 +122,6 @@ int main()
 
 				preset.t++;
 			}
-#endif
-#ifdef INTERFACE_TYPE_APP
-			if(ave++ < preset.ave_num)
-			{
-				preset.pack->T += MDR_TIMER1->ARR;
-				preset.pack->termo += termo_Val();
-			}
-			else
-			{
-				if( (preset.dpll->interp_valid_ta & (TA_PHASE1_VALID_MSK | TA_PHASE2_VALID_MSK)) ==
-						(TA_PHASE1_VALID_MSK | TA_PHASE2_VALID_MSK) )
-				{
-					phase = ta_PhaseInterp(&preset.pack->T, ave);
-				}
-				else
-				{
-					phase = preset.dpll->phase;
-				}
-
-				preset.dpll->shift = (phase * preset.pack->T) / (360 * ave);
-
-				if(preset.termo_src != Amplitude) // Передача кода напряжения датчика температуры
-				{
-					preset.pack->termo /= preset.ave_num;
-				}
-				else // Передача значения огибающей
-				{
-					preset.pack->termo = preset.amp;
-				}
-
-				preset.pack->t = preset.t;
-				preset.pack->phase = phase;
-				preset.pack->P = Calc_Pressures(preset.pack->T, preset.pack->termo, SENS_NUM)/(256.0f * 1.33322368421052631578947368421016f);
-				preset.pack->termo /= ave;
-				if(preset.dpll->ld)
-					preset.pack->termo |= LD_MSK;
-
-				preset.T[preset.t & 0x01] = preset.pack->T/ave;
-				setFlgDataTr();
-				ave = 0;
-				preset.t++;
-			}
-#endif
 		}
 
 		if(getFlgDataTr())
@@ -299,10 +256,9 @@ int preset_Init()
 		preset.search_th = 100;
 		preset.search_len = AMP_SEARCH_POINTS_NUM;
 		preset.search_fl = 1000;
+		preset.termo_src = Amplitude;
 	}
 
-	preset.sot = 0xFEFE;
-	preset.termo_src = Amplitude;
 	preset.es = 1;
 	preset.agc_start = 0;
 	preset.t = 0;
