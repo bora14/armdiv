@@ -131,20 +131,6 @@ void dataRcv()
 		}
 		break;
 	case AM:
-#if SCH_TYPE == 1
-		if((arg < PWR_CTRL_PERIOD_MIN) || (arg > PWR_CTRL_PERIOD_MAX))
-		{
-			uart_mini_printf(USE_UART, CMD_OUT_OF_RANGE);
-		}
-		else
-		{
-			preset->duty_cycle = arg;
-			AMP_Ctrl(arg);
-			uart_mini_printf(USE_UART, CMD_SUCCESS);
-			ok = 1;
-		}
-#endif
-#if SCH_TYPE == 2
 		if(arg > 179) /* �� ����� 179 ��������*/
 		{
 			uart_mini_printf(USE_UART, CMD_OUT_OF_RANGE);
@@ -155,7 +141,6 @@ void dataRcv()
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
 			ok = 1;
 		}
-#endif
 		break;
 	case SW:
 		if((arg < MIN_SWEEP) || (arg > MAX_SWEEP))
@@ -165,6 +150,8 @@ void dataRcv()
 		else
 		{
 			preset->sweep = arg;
+			preset->sweep_cnt = 0;
+			preset->ave_cnt = 0;
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
 			ok = 1;
 		}
@@ -177,6 +164,8 @@ void dataRcv()
 		else
 		{
 			preset->ave_num = arg;
+			preset->sweep_cnt = 0;
+			preset->ave_cnt = 0;
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
 			ok = 1;
 		}
@@ -201,13 +190,6 @@ void dataRcv()
 		if((arg == Termo_Int) || (arg == Termo_Ext) || (arg == Amplitude))
 		{
 			preset->termo_src = arg;
-
-			preset->agc_on = 0;
-
-			ADC_SetChan(preset->termo_src);
-
-			if(arg == Amplitude)
-				preset->agc_on = 1;
 
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
 			ok = 1;
@@ -261,10 +243,18 @@ void dataRcv()
 		{
 			preset->mode = STOP;
 		}
+		else if(arg == AUTOSET)
+		{
+			dpll_Reset();
+		}
 		else
 		{
 			ok = 0;
 		}
+		break;
+	case ST:
+		preset->search_th = arg;
+		uart_mini_printf(USE_UART, CMD_SUCCESS);
 		break;
 #ifdef AGC_ON
 	case TH:
@@ -304,6 +294,25 @@ void dataRcv()
 		break;
 	case FR:
 		preset->freq = arg;
+		uart_mini_printf(USE_UART, CMD_SUCCESS);
+		ok = 1;
+		break;
+	case ES:
+		preset->es = arg;
+		uart_mini_printf(USE_UART, CMD_SUCCESS);
+		break;
+	case LN:
+		if((arg > AMP_SEARCH_POINTS_NUM) || (arg < 3))
+			uart_mini_printf(USE_UART, CMD_INC_ARG);
+		else
+		{
+			preset->search_len = arg;
+			uart_mini_printf(USE_UART, CMD_SUCCESS);
+//			ok = 1;
+		}
+		break;
+	case FL:
+		preset->search_fl = arg;
 		uart_mini_printf(USE_UART, CMD_SUCCESS);
 		ok = 1;
 		break;

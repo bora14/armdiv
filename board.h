@@ -16,15 +16,13 @@
 #define UART_FIFO_TR
 #define XMODEM
 #define POWER_SAVE_MODE_ON ///< Включение режима пониженного энергопотребления
-/**
- * Тип схемы для управления амплитудой входного сигнала.
- * 1 - упралвение через ШИМ;
- * 2 - управление по средствам сдвига фаз.
- */
-#define SCH_TYPE	(2)
 
 //#define AGC_ON			///< включение АРУ
 #define AGC_RECU		///< Рекурсивная оценка значения АЦП
+#define AGC_RECU_D					9
+#define AMP_SEARCH_POINTS_NUM 		512 ///< максимальная длина АЧХ для поиска
+#define AMP_SEARCH_TH				2000
+#define AMP_SEARCH_ACU				256 /// количество периодов для "втягивания" ФАПЧ
 
 //#define FLL_ASSISTED	///< петля ФАПЧ с частотной поддержкой
 
@@ -50,12 +48,7 @@
 #define USE_UART 	MDR_UART2
 #define UART_WORK_BAUD	(115200u)
 #define UART_TA_BAUD	(19200u)
-#if SCH_TYPE == 1
-#define AMP_Timer	MDR_TIMER3
-#endif
-#if SCH_TYPE == 2
 #define AMP_Timer	MDR_TIMER1
-#endif
 #define DPLL_TIMER				MDR_TIMER1
 #define DPLL_TIMER_IRQ			Timer1_IRQn
 #define DPLL_TIMER_Prescaler	TIMER1_Prescaler
@@ -64,25 +57,17 @@
 #define TIMER2_Prescaler (1000u)
 #define TIMER3_Prescaler (0u)
 
-#if SCH_TYPE == 1
-#define LED_PORT 	(MDR_PORTB)
-#define LED_PINS	(PORT_Pin_0)
-#define LED1		(PORT_Pin_0)
-#endif
-
-#if SCH_TYPE == 2
 #define LED_PORT 	(MDR_PORTB)
 #define LED_PINS	(PORT_Pin_1)
 #define LED1		(PORT_Pin_1)
 #define LED2		(PORT_Pin_3)
-#endif
 
 #define DPLL_VER 3
 
-#define MAX_SWEEP 	(30u)
+#define MAX_SWEEP 	(1000u)
 #define MIN_SWEEP 	(1u)
 #define MAX_AVE 	(1000)
-#define MIN_AVE 	(100)
+#define MIN_AVE 	(1)
 #define AVE_NUM 	(200)
 #define DPLL_F_MAX 	(20000u) 	///< Верхняя граница диапазона частот, Гц
 #define DPLL_F_MIN 	(5000u)		///< Нижняя граница диапазона частот, Гц
@@ -90,19 +75,12 @@
 #define Tq_ms		(Tq * 1000.0f)
 #define Tq_us		(Tq * 1000000.0f)
 
-#if SCH_TYPE == 1
-#define PWR_CTRL_PERIOD  (600u)
-#define PWR_CTRL_PERIOD_MAX (2 * PWR_CTRL_PERIOD - 5u)
-#define PWR_CTRL_PERIOD_MIN (5u)
-#elif SCH_TYPE == 2
-
 #define DPLL_T_MAX 		(CPU_MCK/((DPLL_TIMER_Prescaler + 1u) * DPLL_F_MAX))
 #define DPLL_T_MIN 		(CPU_MCK/((DPLL_TIMER_Prescaler + 1u) * DPLL_F_MIN))
 
 #define DPLL_T(Freq)	(CPU_MCK/((DPLL_TIMER_Prescaler + 1u) * Freq))
 #ifdef AGC_ON
 #	define AGC_TH	(1700)
-#endif
 #endif
 
 #define AGC_FREQ	((DPLL_T_MAX >> 1)-1)
@@ -115,6 +93,8 @@
 #define LOOP_FILTER_ORDER	(3u)
 
 #define sign(x) ((x) > 0) ? 1 : (((x) < 0) ? -1 : 0)
+#define MIN(a,b) ((a) > (b)) ? (b) : (a)
+#define MAX(a,b) ((a) > (b)) ? (a) : (b)
 
 #define SUCCESS		(1u)
 #define FAILURE		(0u)
@@ -165,6 +145,8 @@ typedef struct
 	int32_t phase2;	///< Сдвиг фаз в 2-ой точке интерполяционной прямой, в град
 	int32_t period2;///< Период резонансной частоты во 2-ой точке интерполяционной прямой, в тактах
 	int8_t interp_valid_ta;///< Флаг наличия тарировочных коэффициентов
+	uint16_t search;		///< флаг "сигнал найден"
+	int8_t mode;	///< режим работы: 0 - грубый поиск, 1 - точный поиск, 2 - втягивание, 3 - слежение
 }dpll_t;
 
 
@@ -216,7 +198,8 @@ typedef enum
 	UPLOAD = 2,		///< Загрузка данных
 	DOWNLOAD = 3,	///< Выгрузка данных
 	PRESSURE = 4,	///< Измерение давления
-	STOP = 5		///< В этом режиме СЦВД не выдает измерения
+	STOP = 5,		///< В этом режиме СЦВД не выдает измерения
+	AUTOSET = 6		///< Режим автонастройки
 }opmode_t;
 /** @} */
 
@@ -233,27 +216,34 @@ typedef enum
 typedef struct
 {
 	int32_t sot;		///< маркер = 0xFEFE
-	int32_t sweep; 		///< Sweep speed
-	int32_t ave_num; 	///< average number
-	int32_t Tmax; 		///< Max Period Natural Freq
-	int32_t Tmin; 		///< Min Period Natural Freq
-	int8_t sens_num;	///< Номер градуированного датчика
-	int32_t freq;		///< Истинная частота работы МК
-	int16_t att; 		///< Амлитуда возбуждения
-	int16_t att0; 		///< Амплитуда возбуждения в отсутствие захвата
-	uint8_t agc_on; 	///< Включение/Выключение АРУ
+	int16_t sweep; 	///< Sweep speed
+	int16_t ave_num; ///< average number
+	int32_t Tmax; 	///< Max Period Natural Freq
+	int32_t Tmin; 	///< Min Period Natural Freq
+	int8_t sens_num; ///< Номер градуированного датчика
+	int32_t freq;        ///< Измеренная частота работы МК
+	int16_t att; ///< PWR
+	int16_t att0; ///< Амплитуда возбуждения в отсутствие захвата
+	uint8_t agc_on; ///< Включение/Выключение АРУ
 #ifdef AGC_ON
 	int16_t agc_th;
 #endif
-	int32_t shift; 		///< phase shift
-	edge_t edge; 		///< Edge Capture (0 - Rising Edge; 1 - Falling Edge)
-	opmode_t mode; 		///< определено в OPMODE_T
+	int32_t search_th;  ///< порог для разности крайних точек АЧХ (DL, DE)
+	uint16_t search_len; ///< длина выборки, по которой строится АЧХ
+	uint16_t search_fl; ///< порог потери захвата
+	int32_t shift; ///< phase shift
+	edge_t edge; ///< Edge Capture (0 - Rising Edge; 1 - Falling Edge)
+	opmode_t mode; ///< определено в MODE
 	uint8_t filt_order; ///< Loop filter order
-	uint8_t termo_src; 	///< Source Temperature (0 - Internal; 1 - External)
-	uint8_t t;			///< Время работы, в тактах
-	uint8_t agc_start; 	///< Одиночный запуск АРУ
-	uint32_t amp; 		///< Огибающая вхоного сигнала
+	uint8_t termo_src; ///< Source Temperature (0 - Internal; 1 - External)
+	uint8_t t;		///< Время работы, в тактах
+	uint8_t agc_start; ///< Одиночный запуск АРУ
+	uint32_t amp; ///< Огибающая вхоного сигнала
+	uint32_t termo; ///< Напряжение термодатчика
 	int32_t T[2]; 		///< Current Period Natural Freq
+	uint8_t es; ///< вкл/выкл режима захвата. Полезно при измерении АЧХ датчика.
+	uint16_t sweep_cnt;
+	uint16_t ave_cnt;
 	dpll_t * dpll;
 	pack_t * pack;
 }__attribute__((packed)) Preset_t;
@@ -267,15 +257,9 @@ void clearFlgDataTr();
 void LED_On(uint32_t led);
 void LED_Off(uint32_t led);
 void LED_Blink(uint32_t led);
-#if SCH_TYPE == 1
-void AMP_Ctrl(uint16_t period);
-#elif SCH_TYPE == 2
 void AMP_Ctrl(int16_t period);
-#endif
 
 void cpu_boot();
-
-int preset_Init();
 
 void preset_Save();
 

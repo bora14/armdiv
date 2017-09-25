@@ -27,6 +27,7 @@
 #ifdef AGC_ON
 #include "agc.h"
 #endif
+#include <string.h>
 
 static int flgDataTr = 0;
 /**
@@ -34,13 +35,12 @@ static int flgDataTr = 0;
  */
 static Preset_t preset;
 
+static int preset_Init();
+
 int main()
 {
-	int32_t ave;
-
 	__disable_irq();
 
-	ave = 0;
 	/* Инициализация контроллера EEPROM */
 	memo_Configure(MEMO_TA_BANK_SEL);
 	/* Инициализация структуры PRESET_T */
@@ -65,7 +65,6 @@ int main()
 
 	uart_mini_printf(USE_UART, "\n\r ADC Configure......");
 	ADC_Configure(&preset);
-	ADC_SetChan(preset.termo_src);
 	uart_mini_printf(USE_UART, "OK!\n\r");
 
 	termo_Init(&preset);
@@ -91,21 +90,26 @@ int main()
 		if(dpll_UpdFlg())
 		{
 			dpll_ClearUpdFlg();
+
 			dpll_Update();
-#ifdef INTERFACE_TYPE_MATLAB
 
 			preset.T[0] += MDR_TIMER1->ARR;
+
+			agc_Termo();
+
 #ifndef AGC_RECU
 			if(preset.termo_src == Amplitude)
 				preset.pack->termo = preset.amp;
 			else
 				preset.pack->termo += termo_Val();
 #endif
-			if(++ave >= preset.ave_num)
+			if(++preset.ave_cnt >= preset.ave_num)
 			{
-
 #ifdef AGC_RECU
-				preset.pack->termo = preset.amp;
+				if(preset.termo_src == Amplitude)
+					preset.pack->termo = preset.amp;
+				else
+					preset.pack->termo = preset.termo;
 #endif
 				preset.pack->T = preset.T[0] + preset.ave_num;
 				preset.T[0] = 0;
@@ -117,53 +121,10 @@ int main()
 							preset.sens_num);
 				}
 
-				ave = 0;
+				preset.ave_cnt = 0;
 
 				preset.t++;
 			}
-#endif
-#ifdef INTERFACE_TYPE_APP
-			if(ave++ < preset.ave_num)
-			{
-				preset.pack->T += MDR_TIMER1->ARR;
-				preset.pack->termo += termo_Val();
-			}
-			else
-			{
-				if( (preset.dpll->interp_valid_ta & (TA_PHASE1_VALID_MSK | TA_PHASE2_VALID_MSK)) ==
-						(TA_PHASE1_VALID_MSK | TA_PHASE2_VALID_MSK) )
-				{
-					phase = ta_PhaseInterp(&preset.pack->T, ave);
-				}
-				else
-				{
-					phase = preset.dpll->phase;
-				}
-
-				preset.dpll->shift = (phase * preset.pack->T) / (360 * ave);
-
-				if(preset.termo_src != Amplitude) // Передача кода напряжения датчика температуры
-				{
-					preset.pack->termo /= preset.ave_num;
-				}
-				else // Передача значения огибающей
-				{
-					preset.pack->termo = preset.amp;
-				}
-
-				preset.pack->t = preset.t;
-				preset.pack->phase = phase;
-				preset.pack->P = Calc_Pressures(preset.pack->T, preset.pack->termo, SENS_NUM)/(256.0f * 1.33322368421052631578947368421016f);
-				preset.pack->termo /= ave;
-				if(preset.dpll->ld)
-					preset.pack->termo |= LD_MSK;
-
-				preset.T[preset.t & 0x01] = preset.pack->T/ave;
-				setFlgDataTr();
-				ave = 0;
-				preset.t++;
-			}
-#endif
 		}
 
 		if(getFlgDataTr())
@@ -192,6 +153,15 @@ int main()
 		{
 			preset.agc_start = 0;
 			agc_Amp();
+
+			if(((preset.amp >> AGC_RECU_D) < preset.search_fl) && (preset.dpll->mode == DPLL_MODE_TRACK))
+			{
+				// Переход в режим поиска
+				TIMER_ITConfig(DPLL_TIMER, TIMER_STATUS_CCR_CAP_CH3, DISABLE); // отключение захвата
+				TIMER_ITConfig(DPLL_TIMER, TIMER_STATUS_CNT_ARR, ENABLE); // включение сканирования
+				preset.dpll->mode = DPLL_MODE_FAIL;
+				preset.dpll->search = 0;
+			}
 		}
 
 #ifdef POWER_SAVE_MODE_ON
@@ -231,18 +201,10 @@ void LED_Blink(uint32_t led)
 	LED_PORT->RXTX ^= led;
 }
 
-#if SCH_TYPE == 1
-void AMP_Ctrl(uint16_t period)
-{
-	AMP_Timer->CCR3 = period;
-}
-#endif
-#if SCH_TYPE == 2
 void AMP_Ctrl(int16_t amp)
 {
 	preset.att = amp;
 }
-#endif
 
 /**
  * Перевод МК в режим загрузчика UART2.
@@ -284,16 +246,29 @@ int preset_Init()
 		preset.Tmax = DPLL_T_MAX;
 		preset.Tmin = DPLL_T_MIN;
 		preset.filt_order = LOOP_FILTER_ORDER;
-		preset.edge = Falling_Edge;
-		preset.termo_src = Amplitude;
+		preset.edge = Rising_Edge;
+		preset.shift = 0;
+		preset.att0 = 0;
+		preset.att = preset.att0;
 	#ifdef AGC_ON
 		preset.agc_th = AGC_TH;
 	#endif
 		preset.agc_on = 1;
 		preset.mode = WORK;
+		preset.search_th = 100;
+		preset.search_len = AMP_SEARCH_POINTS_NUM;
+		preset.search_fl = 1000;
+		preset.termo_src = Amplitude;
 	}
-
 	preset.sot = 0x10203040;
+	preset.es = 1;
+	preset.agc_start = 0;
+	preset.t = 0;
+	preset.amp = 0;
+	preset.sweep_cnt = 0;
+	preset.ave_cnt = 0;
+	preset.T[0] = 0;
+	preset.T[1] = 0;
 
 	return ret;
 }

@@ -15,12 +15,12 @@
 
 void agc_Init(Preset_t * preset);
 
-void agc();
-
 void agc_SetTH(int16_t th);
 
 int32_t agc_Att0();
 
-int32_t agc_Amp();
+uint32_t agc_Amp();
+
+uint32_t agc_Termo();
 
 #endif /* AGC_H_ */
