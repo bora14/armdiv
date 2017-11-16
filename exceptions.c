@@ -279,16 +279,17 @@ void     Timer3_IRQHandler(void)
 	{
 		MDR_TIMER3->STATUS &= ~TIMER_STATUS_CNT_ARR;
 
-		if( (preset->mode != UPLOAD) && (preset->mode != DOWNLOAD))
+		preset->agc_start = 1;
+
+		if( (preset->mode == WORK) || (preset->mode == AUTOSET))
 		{
-			preset->agc_start = 1;
 			if(uart_freq++ > UART_FREQ)
 			{
 				uart_freq = 0;
 				setFlgDataTr();
 			}
 		}
-		else
+		if((preset->mode == UPLOAD) || (preset->mode == DOWNLOAD))
 		{
 			xmodem_set_timeout();
 		}

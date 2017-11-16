@@ -111,19 +111,23 @@ int main()
 				else
 					preset.pack->termo = preset.termo;
 #endif
-				preset.pack->T = preset.T[0] + preset.ave_num;
-				preset.T[0] = 0;
+				preset.T[0] += preset.ave_num;
+				preset.pack->T = preset.T[0];
 
 				if(preset.mode == PRESSURE)
 				{
-					preset.pack->P = Calc_Pressures((MAX_AVE * (uint64_t)preset.pack->T)/preset.ave_num,
-							(3 * 10000 * (uint64_t)preset.pack->termo) >> (AGC_D + ADC_RESOL),
+					preset.pack->P = Calc_Pressures((MAX_AVE * (uint64_t)preset.T[0])/preset.ave_num,
+							SHR(3 * 10000 * (uint64_t)preset.amp, AGC_D + ADC_RESOL),
 							preset.sens_num);
 				}
 
+				preset.T[0] = 0;
 				preset.ave_cnt = 0;
 
 				preset.t++;
+
+				if(preset.mode == PRESSURE)
+					setFlgDataTr();
 			}
 		}
 

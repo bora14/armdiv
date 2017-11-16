@@ -279,7 +279,7 @@ void dpll_work()
 	 * fine_iter - число проходов режиме DPLL_MODE_FINE, после которого
 	 *       СЦВД снова переходит в режим DPLL_MODE_ROUGH
 	 */
-	static int32_t dt = 1;
+	static int32_t dt_rough = 1, dt_fine = 1;
 	static int32_t Tmin_fine, Tmax_fine, T0;
 	static int16_t search_len, fine_iter;
 
@@ -297,26 +297,27 @@ void dpll_work()
 			search_len = Tmin_fine - Tmax_fine;
 			dpll.T0 = Tmax_fine;
 			fine_iter = 0;
+			dt_fine = 1;
 			reset_search();
 			break;
 		}
 
 		/* Свипирование */
-		dpll.T0 += dt;
+		dpll.T0 += dt_rough;
 		if(dpll.T0 > (DPLL_T_MAX + (DPLL_T_MIN - DPLL_T_MAX)/3))
-			dpll.T0 += 2*dt;
+			dpll.T0 += 2*dt_rough;
 		if(dpll.T0 > (DPLL_T_MAX + 2*(DPLL_T_MIN - DPLL_T_MAX)/3))
-			dpll.T0 += 4*dt;
+			dpll.T0 += 4*dt_rough;
 
 		LED_Blink(LED1);
 
 		if(dpll.T0 > preset->Tmin) // Проверка границ интеравала свипирования
 		{
-			dt = -1;
+			dt_rough = -1;
 		}
 		if(dpll.T0 < preset->Tmax)
 		{
-			dt = 1;
+			dt_rough = 1;
 		}
 
 		break;
@@ -335,17 +336,17 @@ void dpll_work()
 		}
 
 		/* Свипирование */
-		dpll.T0 += dt;
+		dpll.T0 += dt_fine;
 
 		LED_Blink(LED1);
 
 		if(dpll.T0 > Tmin_fine) // Проверка границ интеравала свипирования
 		{
-			dt = -1;
+			dt_fine = -1;
 		}
 		if(dpll.T0 < Tmax_fine)
 		{
-			dt = 1;
+			dt_fine = 1;
 
 			fine_iter++;
 		}
@@ -440,7 +441,7 @@ void dpll_autoset()
 	 * fine_iter - число проходов режиме DPLL_MODE_FINE, после которого
 	 *       СЦВД снова переходит в режим DPLL_MODE_ROUGH
 	 * */
-	static int32_t dt = 1;
+	static int32_t dt_rough = 1, dt_fine = 1;
 	static int32_t Tmin_fine, Tmax_fine, T0;
 	static int16_t search_len, iter;
 
@@ -458,26 +459,27 @@ void dpll_autoset()
 			search_len = Tmin_fine - Tmax_fine;
 			dpll.T0 = Tmax_fine;
 			iter = 0;
+			dt_fine = 1;
 			reset_search();
 			break;
 		}
 
 		/* Свипирование */
-		dpll.T0 += dt;
+		dpll.T0 += dt_rough;
 		if(dpll.T0 > (DPLL_T_MAX + (DPLL_T_MIN - DPLL_T_MAX)/3))
-			dpll.T0 += 2*dt;
+			dpll.T0 += 2*dt_rough;
 		if(dpll.T0 > (DPLL_T_MAX + 2*(DPLL_T_MIN - DPLL_T_MAX)/3))
-			dpll.T0 += 4*dt;
+			dpll.T0 += 4*dt_rough;
 
 		LED_Blink(LED1);
 
 		if(dpll.T0 > preset->Tmin) // Проверка границ интеравала свипирования
 		{
-			dt = -1;
+			dt_rough = -1;
 		}
 		if(dpll.T0 < preset->Tmax)
 		{
-			dt = 1;
+			dt_rough = 1;
 		}
 
 		break;
@@ -498,17 +500,17 @@ void dpll_autoset()
 		}
 
 		/* Свипирование */
-		dpll.T0 += dt;
+		dpll.T0 += dt_fine;
 
 		LED_Blink(LED1);
 
 		if(dpll.T0 > Tmin_fine) // Проверка границ интеравала свипирования
 		{
-			dt = -1;
+			dt_fine = -1;
 		}
 		if(dpll.T0 < Tmax_fine)
 		{
-			dt = 1;
+			dt_fine = 1;
 
 			iter++;
 		}
@@ -597,7 +599,7 @@ int dpll_setT(uint32_t T)
 {
 	MDR_TIMER1->ARR = T;
 
-	MDR_TIMER1->CCR1 = (MDR_TIMER1->ARR >> 1) + (MDR_TIMER1->ARR & 0x1); // Обновление регистра захвата CCR1
+	MDR_TIMER1->CCR1 = SHR(T, 1); // Обновление регистра захвата CCR1
 
 	MDR_TIMER1->CCR2 = MDR_TIMER1->CCR1 - (preset->att * MDR_TIMER1->ARR)/360; // Обновление регистра захвата CCR2
 	MDR_TIMER1->CCR21 = MDR_TIMER1->ARR - (preset->att * MDR_TIMER1->ARR)/360; // Обновление регистра захвата CCR21

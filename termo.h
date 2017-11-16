@@ -17,9 +17,4 @@
  */
 void termo_Init(Preset_t * preset);
 
-/**
- * Выбор используемого датчика температуры.
- */
-void termo_SetChan(uint8_t chan);
-
 #endif /* TERMO_H_ */

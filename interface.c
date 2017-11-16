@@ -187,7 +187,7 @@ void dataRcv()
 		}
 		break;
 	case TS:
-		if((arg == Termo_Int) || (arg == Termo_Ext) || (arg == Amplitude))
+		if((arg == Termo_Ext) || (arg == Amplitude))
 		{
 			preset->termo_src = arg;
 
@@ -255,6 +255,7 @@ void dataRcv()
 	case ST:
 		preset->search_th = arg;
 		uart_mini_printf(USE_UART, CMD_SUCCESS);
+		ok = 1;
 		break;
 #ifdef AGC_ON
 	case TH:
@@ -308,7 +309,7 @@ void dataRcv()
 		{
 			preset->search_len = arg;
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
-//			ok = 1;
+			ok = 1;
 		}
 		break;
 	case FL:
@@ -359,7 +360,7 @@ int ta_Send()
 		T = (float)preset->pack->T;
 		Period = (T * Tq_ms) / (float)preset->ave_num;
 		pack.T = 0;
-		termo = (float)((3 * pack.termo) >> AGC_D)/4096.0f * 0.0001f;
+		termo = (float)SHR(3 * pack.termo, AGC_D)/4096.0f * 0.0001f;
 #ifndef AGC_RECU
 		pack.termo = 0;
 #endif

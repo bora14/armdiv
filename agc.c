@@ -80,7 +80,7 @@ uint32_t agc_Termo()
 	static uint32_t rem;
 	int32_t termo = 0;
 
-	termo_SetChan(preset->termo_src);
+	ADC_SetChannel(TERMO_EXT_CHAN);
 
 	ADC_Read((uint16_t * )&termo);
 

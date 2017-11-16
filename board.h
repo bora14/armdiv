@@ -95,6 +95,8 @@
 #define sign(x) ((x) > 0) ? 1 : (((x) < 0) ? -1 : 0)
 #define MIN(a,b) ((a) > (b)) ? (b) : (a)
 #define MAX(a,b) ((a) > (b)) ? (a) : (b)
+/*сдвиг в право с округлением. a - число, b - на сколько нужно сдвинуть*/
+#define SHR(a, b) (  ((a)+(1<<((b)-1)))>> (b)  )
 
 #define SUCCESS		(1u)
 #define FAILURE		(0u)

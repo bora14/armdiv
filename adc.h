@@ -32,9 +32,8 @@
  */
 typedef enum
 {
-	Termo_Int = 0,	///< Термодиод МК
-	Termo_Ext = 1,	///< Термодиод МДГ
-	Amplitude = 2	///< Сигнал на выходе МДГ
+	Termo_Ext = 0,	///< Термодиод МДГ
+	Amplitude = 1	///< Сигнал на выходе МДГ
 }adcChannel_t;
 /** @} */
 
