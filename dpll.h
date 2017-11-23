@@ -26,6 +26,8 @@ int32_t dpll_Init(Preset_t * preset_);
 
 uint8_t dpll_UpdFlg();
 
+void dpll_Fail();
+
 void dpll_SetUpdFlg();
 
 void dpll_ClearUpdFlg();

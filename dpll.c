@@ -44,13 +44,19 @@ static dpll_t dpll;
 
 static int32_t dAc_data[2] = {0};
 
-static int8_t intr_data[2] = {0};
-
 static uint16_t i, i1;
 
 static void (*dpll_op)();
 
+static void (*dpll_failure)();
+
 static void dpll_work();
+
+static void dpll_work_scan();
+
+static void dpll_fail();
+
+static void dpll_fail_scan();
 
 static void dpll_autoset();
 
@@ -87,7 +93,7 @@ int32_t dpll_Init(Preset_t * preset_)
 	dpll.Acc = 0;
 	dpll.cnt = 0;
 	dpll.updflg = 0;
-	dpll.intr = intr_data;
+	dpll.intr = 0;
 	dpll.dPhi = 0.0f;
 	dpll.ld = 0;
 	dpll.shift = 0;
@@ -105,7 +111,23 @@ void dpll_Reset()
 	if(preset->mode == AUTOSET)
 		dpll_op = &dpll_autoset;
 	else
-		dpll_op = &dpll_work;
+	{
+		switch(preset->type_md)
+		{
+		case MD9:
+			dpll_op = &dpll_work_scan;
+			dpll_failure = &dpll_fail_scan;
+			break;
+		case MD13:
+			dpll_op = &dpll_work;
+			dpll_failure = &dpll_fail;
+			break;
+		default:
+			dpll_op = &dpll_work_scan;
+			dpll_failure = &dpll_fail_scan;
+			break;
+		}
+	}
 
 	reset_search();
 }
@@ -140,12 +162,12 @@ int32_t dpll_filt(dpll_t * dpll_)
 		phase = preset->shift + preset->att/2;
 	}
 
-	if(dpll.search > AMP_SEARCH_ACU)
+//	if(dpll.search > AMP_SEARCH_ACU)
 		dpll.shift = (phase * (int32_t)DPLL_TIMER->ARR) / 360;
-	else
-	{
-		dpll.shift = 0;
-	}
+//	else
+//	{
+//		dpll.shift = 0;
+//	}
 
 	dpll_->Acc = dpll_->dAc[pos] + dpll.shift;
 	/* Вычисление выходного значения петлевого фильтра */
@@ -262,6 +284,11 @@ void dpll_clearPhi()
 void dpll_Update()
 {
 	(*dpll_op)();
+}
+
+void dpll_Fail()
+{
+	(*dpll_failure)();
 }
 
 /**
@@ -397,8 +424,6 @@ void dpll_work()
 
 		dpll_clearFilt(); // Сброс значений петлевого фильтра
 
-		dpll.intr[1] = 0;
-
 		dpll.ld = 0;
 
 		dpll.mode = DPLL_MODE_ROUGH;
@@ -428,6 +453,70 @@ void dpll_work()
 
 	dpll_setT(lroundf(dpll.T));
 
+}
+
+void dpll_work_scan()
+{
+	static int32_t dt = 1;
+
+	if (dpll.intr == 0) // проверка наличия сигнала на входе
+	{
+		/* Свипирование */
+		dpll.T0 += dt;
+		if(dpll.T0 > (DPLL_T_MAX + (DPLL_T_MIN - DPLL_T_MAX)/3))
+			dpll.T0 += 2*dt;
+		if(dpll.T0 > (DPLL_T_MAX + 2*(DPLL_T_MIN - DPLL_T_MAX)/3))
+			dpll.T0 += 4*dt;
+
+		LED_Blink(LED1);
+
+		if(dpll.T0 > preset->Tmin) // Проверка границ интеравала свипирования
+		{
+			dt = -1;
+		}
+		if(dpll.T0 < preset->Tmax)
+		{
+			dt = 1;
+		}
+
+		/*****************/
+
+		dpll_clearPhi(); // Обнуление выхода петлевого фильтра
+
+		dpll_clearAcc(); // Обнуление фазового детектора
+
+		dpll_clearFilt(); // Сброс значений петлевого фильтра
+
+		dpll.ld = 0;
+	}
+	else
+	{
+		dpll.intr = 0;
+
+		LED_On(LED1);
+
+		dpll_filt(&dpll); // Вычисление выходного значения петлевого фильтра
+
+		dpll.ld = 1;
+	}
+
+	dpll.T = dpll.Phi + (float)dpll.T0; // Вычисление текущего периода выходного сигнала
+
+	/* Проверка соответствия выходного сигнала диапазону рабочих частот */
+	if (dpll.T < preset->Tmax)
+	{
+		dpll.T = preset->Tmax;
+	}
+	else if (dpll.T > preset->Tmin)
+	{
+		dpll.T = preset->Tmin;
+	}
+	else if ( isinf(dpll.T) || isnan(dpll.T))
+	{
+		dpll.T = preset->Tmin;
+	}
+
+	dpll_setT(lroundf(dpll.T));
 }
 
 void dpll_autoset()
@@ -525,20 +614,20 @@ void dpll_autoset()
 
 	case DPLL_MODE_DRAW:
 
-		if(dpll.search < (AMP_SEARCH_ACU >> 1))
-		{
-			dpll.search++;
-		}
-		else
-		{
+//		if(dpll.search < (AMP_SEARCH_ACU >> 1))
+//		{
+//			dpll.search++;
+//		}
+//		else
+//		{
 			dpll.mode = DPLL_MODE_TRACK;
 
 			TIMER_ITConfig(DPLL_TIMER, TIMER_STATUS_CNT_ARR, DISABLE);
 
 			TIMER_ITConfig(DPLL_TIMER, TIMER_STATUS_CCR_CAP_CH3, ENABLE);
-		}
-
-		break;
+//		}
+//
+//		break;
 
 	case DPLL_MODE_TRACK:
 
@@ -560,8 +649,6 @@ void dpll_autoset()
 		dpll_clearAcc(); // Обнуление фазового детектора
 
 		dpll_clearFilt(); // Сброс значений петлевого фильтра
-
-		dpll.intr[1] = 0;
 
 		dpll.ld = 0;
 
@@ -593,6 +680,23 @@ void dpll_autoset()
 	/* Обновление параметров таймера на котором реализована ФАПЧ */
 	dpll_setT(lroundf(dpll.T));
 
+}
+
+void dpll_fail()
+{
+	if(((preset->amp >> AGC_RECU_D) < preset->search_fl) && (dpll.mode == DPLL_MODE_TRACK))
+	{
+		// Переход в режим поиска
+		TIMER_ITConfig(DPLL_TIMER, TIMER_STATUS_CCR_CAP_CH3, DISABLE); // отключение захвата
+		TIMER_ITConfig(DPLL_TIMER, TIMER_STATUS_CNT_ARR, ENABLE); // включение сканирования
+		dpll.mode = DPLL_MODE_FAIL;
+		dpll.search = 0;
+	}
+}
+
+void dpll_fail_scan()
+{
+	return;
 }
 
 int dpll_setT(uint32_t T)

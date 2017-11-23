@@ -106,7 +106,11 @@ int Timer1_Configure(Preset_t * preset)
 	MDR_TIMER1->IE = 0x0;
 
 	TIMER_ITConfig(MDR_TIMER1, TIMER_STATUS_CNT_ARR, ENABLE);
-	TIMER_ITConfig(MDR_TIMER1, TIMER_STATUS_CCR_CAP_CH3, DISABLE);
+
+	if(preset->type_md == MD13)
+		TIMER_ITConfig(MDR_TIMER1, TIMER_STATUS_CCR_CAP_CH3, DISABLE);
+	else if(preset->type_md == MD9)
+		TIMER_ITConfig(MDR_TIMER1, TIMER_STATUS_CCR_CAP_CH3, ENABLE);
 
 	NVIC_SetPriority(Timer1_IRQn, TIMER1_EXP_PRIOR);
 

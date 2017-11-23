@@ -85,6 +85,8 @@ int main()
 
 	uart_mini_printf(USE_UART, "\r\n GO-GO-GO! \n\r");
 
+	static ave_cnt;
+
 	for(;;)
 	{
 		if(dpll_UpdFlg())
@@ -103,7 +105,7 @@ int main()
 			else
 				preset.pack->termo += termo_Val();
 #endif
-			if(++preset.ave_cnt >= preset.ave_num)
+			if(++ave_cnt >= preset.ave_num)
 			{
 #ifdef AGC_RECU
 				if(preset.termo_src == Amplitude)
@@ -122,7 +124,7 @@ int main()
 				}
 
 				preset.T[0] = 0;
-				preset.ave_cnt = 0;
+				ave_cnt = 0;
 
 				preset.t++;
 
@@ -158,14 +160,7 @@ int main()
 			preset.agc_start = 0;
 			agc_Amp();
 
-			if(((preset.amp >> AGC_RECU_D) < preset.search_fl) && (preset.dpll->mode == DPLL_MODE_TRACK))
-			{
-				// Переход в режим поиска
-				TIMER_ITConfig(DPLL_TIMER, TIMER_STATUS_CCR_CAP_CH3, DISABLE); // отключение захвата
-				TIMER_ITConfig(DPLL_TIMER, TIMER_STATUS_CNT_ARR, ENABLE); // включение сканирования
-				preset.dpll->mode = DPLL_MODE_FAIL;
-				preset.dpll->search = 0;
-			}
+			dpll_Fail();
 		}
 
 #ifdef POWER_SAVE_MODE_ON
@@ -263,20 +258,22 @@ int preset_Init()
 		preset.search_len = AMP_SEARCH_POINTS_NUM;
 		preset.search_fl = 1000;
 		preset.termo_src = Amplitude;
+		preset.type_md = MD9;
 	}
 	preset.sot = 0x10203040;
 	preset.es = 1;
 	preset.agc_start = 0;
 	preset.t = 0;
 	preset.amp = 0;
-	preset.sweep_cnt = 0;
-	preset.ave_cnt = 0;
 	preset.T[0] = 0;
 	preset.T[1] = 0;
 
 	return ret;
 }
 
+/**
+ * Сохранение настроек СЦВД в ПЗУ
+ */
 void preset_Save()
 {
 	/*

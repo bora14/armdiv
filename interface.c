@@ -26,6 +26,8 @@ static pack_t pack = {SOT, 0, 0, 0, 0.0f, 0, 0};
 
 static uart_cmd_t  uart_cmd;
 static Preset_t * preset;
+static int32_t len;
+static uint8_t * p;
 
 void interface_Init(Preset_t * _preset)
 {
@@ -38,6 +40,10 @@ void interface_Init(Preset_t * _preset)
 	pack.eot = EOT;
 
 	preset->pack = &pack;
+
+	len = (int32_t)&preset->termo_src + sizeof(preset->termo_src)
+			- (int32_t)preset;
+	p = (uint8_t *)preset;
 
 	UART_Configure(UART_WORK_BAUD);
 }
@@ -83,11 +89,11 @@ void dataRcv()
 #ifdef NUMBER_VERSION
 	case LS:
 		uart_mini_printf(USE_UART, "\r\n NUMBER_VERSION %s \r\n", NUMBER_VERSION);
-		uart_mini_printf(USE_UART, "\r\n sweep %ld \r\n", preset->sweep);
-		uart_mini_printf(USE_UART, "\r\n ave_num %ld \r\n", preset->ave_num);
+		uart_mini_printf(USE_UART, "\r\n sweep %d \r\n", preset->sweep);
+		uart_mini_printf(USE_UART, "\r\n ave_num %d \r\n", preset->ave_num);
 		uart_mini_printf(USE_UART, "\r\n Tmax %ld \r\n", preset->Tmax);
 		uart_mini_printf(USE_UART, "\r\n Tmin %ld \r\n", preset->Tmin);
-		uart_mini_printf(USE_UART, "\r\n sens_num %d \r\n", preset->sens_num);
+		uart_mini_printf(USE_UART, "\r\n sens_ID %s \r\n", preset->sens_ID);
 		uart_mini_printf(USE_UART, "\r\n freq %ld \r\n", preset->freq);
 #if SCH_TYPE == 1
 		uart_mini_printf(USE_UART, "\r\n duty_cycle %ld \r\n", preset->duty_cycle);
@@ -102,6 +108,7 @@ void dataRcv()
 		uart_mini_printf(USE_UART, "\r\n shift %ld \r\n", preset->shift);
 		uart_mini_printf(USE_UART, "\r\n edge %d \r\n", preset->edge);
 		uart_mini_printf(USE_UART, "\r\n mode %d \r\n", preset->mode);
+		uart_mini_printf(USE_UART, "\r\n type_md %d \r\n", preset->type_md);
 		uart_mini_printf(USE_UART, "\r\n termo_src %d \r\n", preset->termo_src);
 		ok = 1;
 		break;
@@ -150,8 +157,6 @@ void dataRcv()
 		else
 		{
 			preset->sweep = arg;
-			preset->sweep_cnt = 0;
-			preset->ave_cnt = 0;
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
 			ok = 1;
 		}
@@ -164,8 +169,6 @@ void dataRcv()
 		else
 		{
 			preset->ave_num = arg;
-			preset->sweep_cnt = 0;
-			preset->ave_cnt = 0;
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
 			ok = 1;
 		}
@@ -288,7 +291,8 @@ void dataRcv()
 		else
 		{
 			preset->sens_num = arg;
-			uart_mini_printf(USE_UART,"\t %s \t", ta_SensID(preset->sens_num));
+			ta_Init(preset);
+			uart_mini_printf(USE_UART,"\t %s \t", preset->sens_ID);
 			uart_mini_printf(USE_UART, CMD_SUCCESS);
 			ok = 1;
 		}
@@ -317,6 +321,18 @@ void dataRcv()
 		uart_mini_printf(USE_UART, CMD_SUCCESS);
 		ok = 1;
 		break;
+	case TY:
+		if(arg > MD13)
+		{
+			uart_mini_printf(USE_UART, CMD_INC_ARG);
+			break;
+		}
+		preset->type_md = arg;
+		Timer1_Configure(preset);
+		dpll_Reset();
+		uart_mini_printf(USE_UART, CMD_SUCCESS);
+		ok = 1;
+		break;
 	default:
 		uart_mini_printf(USE_UART, CMD_UNKNOWN);
 		break;
@@ -325,11 +341,8 @@ void dataRcv()
 	if(ok == 1)
 	{
 		int i;
-		uint8_t * p = (uint8_t *)preset;
-		int32_t begin = &preset->sot;
-		int32_t end = &preset->termo_src + sizeof(preset->termo_src);
-		for(i = 0; i < end - begin; i++)
-			UART_PutChar(USE_UART, *p++);
+		for(i = 0; i < len; i++)
+			UART_PutChar(USE_UART, *(p + i));
 	}
 }
 

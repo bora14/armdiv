@@ -232,6 +232,8 @@ void     WWDG_IRQHandler(void)
 
 void     Timer1_IRQHandler(void)
 {
+	static sweep_cnt;
+
 	__disable_irq();
 
 	if ((MDR_TIMER1->STATUS & TIMER_STATUS_CCR_CAP_CH3) && (MDR_TIMER1->IE & TIMER_STATUS_CCR_CAP_CH3))
@@ -242,7 +244,9 @@ void     Timer1_IRQHandler(void)
 
 		MDR_TIMER1->CCR3 = 0u;
 
-		preset->dpll->intr[0] = 1;
+		preset->dpll->intr = 1;
+
+		sweep_cnt = 0;
 
 		dpll_SetUpdFlg();
 
@@ -255,9 +259,9 @@ void     Timer1_IRQHandler(void)
 
 		MDR_TIMER1->STATUS &= ~TIMER_STATUS_CNT_ARR;
 
-		if(preset->sweep_cnt++ >= preset->sweep)
+		if(sweep_cnt++ >= preset->sweep)
 		{
-			preset->sweep_cnt = 0;
+			sweep_cnt = 0;
 			dpll_SetUpdFlg();
 		}
 	}

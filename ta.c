@@ -24,6 +24,7 @@
 #include "memo.h"
 #include "xmodem.h"
 #include "timer.h"
+#include <string.h>
 
 //---------------------------------------------------------------------------
 Preset_t * preset;
@@ -32,7 +33,7 @@ Preset_t * preset;
 //uint32_t VTPS[TA_NUM_SENSORS]; /* Код АЦП */
 
 //Normal_Data Psen[TA_NUM_SENSORS];
-DDG_Koef PSens1;
+static DDG_Koef PSens1;
 
 /**
  * Инициализация внутренних переменных
@@ -48,6 +49,8 @@ void ta_Init(Preset_t * preset_)
 	preset->dpll->interp_valid_ta = 0;
 
 	ta_InitTable();
+
+	memcpy(preset->sens_ID, ta_SensID(0), sizeof(preset->sens_ID));
 }
 
 /**

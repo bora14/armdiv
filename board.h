@@ -107,6 +107,23 @@ typedef enum
 	Falling_Edge
 }edge_t;
 
+/**
+ * \defgroup TYPE_MD_T Тип датчика
+ *
+ * Тип датчика, подключенного к СЦВД,
+ * определяет какой режим поиска будет использоваться:
+ * - захват при сканировании для МД9
+ * - амплитудный поиск для МД13
+ *
+ * @{
+ */
+typedef enum
+{
+	MD9,	///< МД9
+	MD13	///< МД13
+}type_MD_t;
+/** @} */
+
 #ifdef FLL_ASSISTED
 /**
  * Переменная типа dAc_t необходима для хранения
@@ -137,7 +154,7 @@ typedef struct
 	float Acc; 	///< Указатель на входные значения петлевого фильтра
 	int32_t cnt;	///< Номер периода для которого получено значение фазового детектора
 	uint8_t updflg; ///< Флаг готовности данных фазового детектора
-	int8_t * intr;	///< Указатель на признак наличия сигнала на входе
+	int8_t intr;	///< Указатель на признак наличия сигнала на входе
 	float dPhi;		///< Выходное значение интегратора в петлевом фильтре
 	int8_t ld;		///< Флаг захвата частоты ФАПЧ
 	int32_t shift;	///< Сдвиг фаз между входом и выходом, в тактах
@@ -217,12 +234,13 @@ typedef enum
  */
 typedef struct
 {
-	int32_t sot;		///< маркер = 0xFEFE
+	int32_t sot;		///< маркер = 0x10203040
 	int16_t sweep; 	///< Sweep speed
 	int16_t ave_num; ///< average number
 	int32_t Tmax; 	///< Max Period Natural Freq
 	int32_t Tmin; 	///< Min Period Natural Freq
-	int8_t sens_num; ///< Номер градуированного датчика
+	int8_t sens_num;
+	char sens_ID[8]; ///< Номер градуированного датчика
 	int32_t freq;        ///< Измеренная частота работы МК
 	int16_t att; ///< PWR
 	int16_t att0; ///< Амплитуда возбуждения в отсутствие захвата
@@ -237,15 +255,14 @@ typedef struct
 	edge_t edge; ///< Edge Capture (0 - Rising Edge; 1 - Falling Edge)
 	opmode_t mode; ///< определено в MODE
 	uint8_t filt_order; ///< Loop filter order
-	uint8_t termo_src; ///< Source Temperature (0 - Internal; 1 - External)
+	type_MD_t type_md;		///< тип датчика, подключенного к СЦВД
+	uint8_t termo_src; ///< Source ADC (0 - Temreture; 1 - Amplitude)
 	uint8_t t;		///< Время работы, в тактах
 	uint8_t agc_start; ///< Одиночный запуск АРУ
 	uint32_t amp; ///< Огибающая вхоного сигнала
 	uint32_t termo; ///< Напряжение термодатчика
 	int32_t T[2]; 		///< Current Period Natural Freq
 	uint8_t es; ///< вкл/выкл режима захвата. Полезно при измерении АЧХ датчика.
-	uint16_t sweep_cnt;
-	uint16_t ave_cnt;
 	dpll_t * dpll;
 	pack_t * pack;
 }__attribute__((packed)) Preset_t;
